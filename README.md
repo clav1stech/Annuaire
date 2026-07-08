@@ -33,12 +33,18 @@ L’interface Streamlit s’ouvre dans le navigateur.
 
 ## Fichiers SIRENE attendus
 
+Téléchargement des fichiers Parquet SIRENE: https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret
+
 - Obligatoires:
-  - `stocketablissement` (fichier parquet ou dossier parquet)
-  - `stockunitelegale` (fichier parquet ou dossier parquet)
+  - `stocketablissement` (fichier parquet ou dossier parquet) — un enregistrement par établissement (SIRET): adresse, statut administratif (actif/fermé), code activité (NAF), date de création, indicateur siège social. C'est la table de base pour le statut et l'adresse de chaque SIRET.
+  - `stockunitelegale` (fichier parquet ou dossier parquet) — un enregistrement par unité légale (SIREN): dénomination/nom, catégorie juridique, statut administratif et statut de diffusion, activité principale. Sert à enrichir chaque SIRET avec l'identité de l'entreprise.
 - Optionnels:
-  - `stocketablissementlienssuccession`
-  - `stocketablissementhistorique`
+  - `stocketablissementlienssuccession` — table officielle des liens de succession SIRENE (SIRET prédécesseur → SIRET successeur lors d'un transfert/déménagement d'établissement).
+  - `stocketablissementhistorique` — historique des états successifs d'un établissement (adresses et statuts précédents dans le temps).
+
+Impact de l'absence des fichiers optionnels sur le résultat:
+- Sans `stocketablissementlienssuccession`: pour les SIRET fermés, le remplaçant recommandé ne peut plus provenir du lien de succession officiel; l'application retombe sur une heuristique plus faible (un autre établissement actif du même SIREN, s'il existe). La note d'analyse ne peut jamais indiquer "Succession", et le compteur "Fermés avec succession officielle" reste à 0.
+- Sans `stocketablissementhistorique`: aucune adresse ou statut antérieur n'est disponible pour un SIRET; l'application ne peut plus confirmer un historique de déménagement et se limite à l'état courant (photo unique) fourni par `stocketablissement`.
 
 L’application détecte les colonnes disponibles de manière défensive selon le millésime et n’échoue pas si certaines colonnes attendues sont absentes.
 
