@@ -5,7 +5,7 @@ Application locale Streamlit pour contrôler une liste d'identifiants SIRET/SIRE
 ## Prérequis
 
 - Windows 10/11
-- Python 3.11 ou 3.12
+- Python 3.11 ou 3.12 (plage officiellement testée), ou Python 3.14 (supporté grâce aux wheels précompilées `pyarrow`/`duckdb`, non testé aussi largement)
 - Fichiers SIRENE au format Parquet disponibles en local
 
 ## Installation
@@ -18,9 +18,10 @@ create_venv.bat
 ```
 
 Ce script:
+- affiche la version de Python détectée et avertit si elle est hors de la plage testée (3.11-3.12), en demandant confirmation avant de continuer,
 - crée `.venv_annuaire_sirene` si nécessaire,
 - installe/upgrade `pip`,
-- installe les dépendances depuis `requirements.txt`.
+- installe les dépendances depuis `requirements.txt`, en forçant `pyarrow` et `duckdb` (`>=15,<25` et `>=1.1,<2`) à utiliser uniquement des wheels précompilées (`--only-binary`) pour éviter une compilation depuis les sources qui échouerait faute de cmake/Visual Studio.
 
 ## Lancement
 
