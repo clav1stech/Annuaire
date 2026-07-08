@@ -1209,14 +1209,15 @@ def _style_siret_overview_sheet(
             segment_start = idx
     segments.append((segment_start, max_col, groups[segment_start - 1]))
 
+    center_across = Alignment(horizontal="centerContinuous", vertical="center", wrap_text=True)
     for start, end, group_name in segments:
-        ws.merge_cells(start_row=1, start_column=start, end_row=1, end_column=end)
-        cell = ws.cell(row=1, column=start, value=group_name)
-        cell.fill = group_styles.get(group_name, PatternFill("solid", fgColor="D9D9D9"))
-        cell.font = group_font
-        cell.alignment = center
+        fill = group_styles.get(group_name, PatternFill("solid", fgColor="D9D9D9"))
         for c in range(start, end + 1):
-            ws.cell(row=1, column=c).border = thin_border
+            cell = ws.cell(row=1, column=c, value=group_name if c == start else None)
+            cell.fill = fill
+            cell.font = group_font
+            cell.alignment = center_across
+            cell.border = thin_border
 
     # Header row style.
     for col_idx in range(1, max_col + 1):

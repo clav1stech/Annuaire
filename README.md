@@ -55,6 +55,8 @@ L’application détecte les colonnes disponibles de manière défensive selon l
 3. Indiquer s’il y a une ligne d’en-tête.
 4. Choisir les colonnes d'entrée à exporter dans le report final (checkbox).
 5. Sélectionner la colonne d'identifiants (SIRET/SIREN).
+   - Privilégier autant que possible une colonne SIRET plutôt que SIREN: un SIREN identifie l'entreprise mais pas un établissement précis, l'application retombe alors sur le siège social, ce qui peut créer de faux doublons SIRET si l'entreprise a plusieurs établissements.
+   - Si le fichier source a des données partielles (parfois SIRET renseigné, parfois seulement SIREN), on peut créer une colonne mixte sous Excel (ex. en priorisant le SIRET si présent, sinon le SIREN) et la sélectionner ici: l'application sait traiter une colonne mixte SIRET/SIREN, en retombant sur le siège social pour chaque valeur reconnue comme un SIREN.
    - Optionnel: inclure aussi les lignes hors France si l'identifiant est valide (SIRET 14 + Luhn ou SIREN 9 + Luhn).
    - Si une colonne Pays est utilisée, les valeurs vides (et `0`) sont conservées dans l'analyse (traitées comme "pays non précisé").
 6. Renseigner les chemins Parquet SIRENE.
@@ -76,11 +78,21 @@ Onglets produits:
 - `siret_a_cloturer` (SIRET fermés sans remplaçant + SIRET radiés)
 - `dictionnaire_colonnes` (description métier simple des colonnes principales)
 
-Le report Excel est maintenant structuré visuellement pour distinguer:
-- les données d'entrée utilisateur,
-- les contrôles de format,
-- les données brutes SIRENE,
-- l'analyse de situation (priorité, action, remplacement, note d'analyse).
+### Feuille `siret_overview`
+
+Cette feuille est le tableau principal du report: une ligne par identifiant analysé, avec toutes les colonnes utiles au nettoyage. Pour faciliter la lecture d'un fichier potentiellement large, la ligne 1 regroupe les colonnes par catégorie (couleur de fond commune, centrée sur la plage de colonnes du groupe) et la ligne 2 porte les en-têtes détaillés de chaque colonne; les données démarrent en ligne 3.
+
+Les 4 catégories (couleur de la ligne 1) sont, dans l'ordre d'apparition des colonnes:
+- **Input utilisateur** (bleu clair) — toutes les colonnes d'entrée sélectionnées par l'utilisateur à l'étape 4 (colonnes du fichier source telles quelles), plus `siret_entree` (l'identifiant brut tel que saisi, avant nettoyage).
+- **Contrôles format** (vert clair) — colonnes techniques produites par la validation de l'identifiant: `siret_normalise`, `identifiant_recherche`, `siret_format_valide`, `siret_doublon_entree`, `siren_doublon_entree`.
+- **Données brutes SIRENE** (orange clair) — toutes les colonnes issues directement des fichiers SIRENE (établissement, unité légale, succession, historique...), sans transformation d'analyse métier. C'est la catégorie "par défaut": toute colonne qui n'appartient à aucune des trois autres groupes y est rattachée.
+- **Analyse situation** (jaune) — colonnes calculées par l'application pour qualifier chaque ligne: toutes les colonnes préfixées `analysis_` (priorité, note d'analyse, etc.), ainsi que `siret_status`, `cleaning_action` et `siret_remplacement_recommande`.
+
+En complément du regroupement par colonnes, certaines cellules de données sont elles-mêmes colorées pour faciliter le tri visuel:
+- `siret_status`: Actif (vert), Fermé (orange), Non trouvé (bleu), Invalide (orange clair), Radiée (jaune pâle).
+- `analysis_priority`: Haute (orange foncé), Moyenne (jaune), Basse (vert clair).
+
+Le classement d'une colonne dans une catégorie ne dépend que de son nom technique (préfixe/liste fixe), pas de son contenu; si une nouvelle colonne SIRENE apparaît dans les fichiers Parquet fournis, elle sera automatiquement rattachée à "Données brutes SIRENE".
 
 Marqueur de diffusion partielle:
 - `analysis_nd_detecte` indique `Oui` si un marqueur `[ND]` est détecté dans les données.
