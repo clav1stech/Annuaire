@@ -3,12 +3,104 @@
 from __future__ import annotations
 
 import glob
+import re
+import unicodedata
+from dataclasses import dataclass, field
 from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
 
 from .config import SUPPORTED_INPUT_EXTENSIONS
+
+# Category keys map to the SIRENE stock file each Parquet source represents.
+# Order matters: more specific keywords (historique, succession) must be
+# checked before the generic "etablissement" keyword, since filenames such as
+# "StockEtablissementHistorique" or "stock-stocketablissementlienssuccession-parquet"
+# also contain "etablissement" as a substring.
+_SIRENE_CATEGORY_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
+    ("stocketablissementhistorique", ("historique",)),
+    ("stocketablissementlienssuccession", ("lienssuccession", "succession")),
+    ("stockunitelegale", ("unitelegale",)),
+    ("stocketablissement", ("etablissement",)),
+]
+
+SIRENE_REQUIRED_CATEGORIES = ("stocketablissement", "stockunitelegale")
+SIRENE_OPTIONAL_CATEGORIES = ("stocketablissementlienssuccession", "stocketablissementhistorique")
+
+
+def _normalize_filename_token(name: str) -> str:
+    """Lowercase, strip accents and non-alphanumeric characters from a filename."""
+    normalized = unicodedata.normalize("NFKD", name.lower())
+    ascii_only = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+    return re.sub(r"[^a-z0-9]", "", ascii_only)
+
+
+def _classify_parquet_filename(filename: str) -> str | None:
+    """Return the SIRENE category matching a parquet filename, if any."""
+    token = _normalize_filename_token(Path(filename).stem)
+    for category, keywords in _SIRENE_CATEGORY_KEYWORDS:
+        if any(keyword in token for keyword in keywords):
+            return category
+    return None
+
+
+@dataclass
+class SireneAutoDetection:
+    """Result of scanning a directory for SIRENE Parquet stock files."""
+
+    paths: dict[str, str] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+
+
+def detect_sirene_parquet_files(root_dir: str | Path) -> SireneAutoDetection:
+    """
+    Scan ``root_dir`` for SIRENE Parquet stock files and classify them.
+
+    Matching is keyword-based on the normalized filename (accents/punctuation
+    stripped), so it tolerates naming variations such as
+    ``stock-stocketablissement-parquet.parquet`` in addition to the official
+    ``StockEtablissement_utf8.parquet`` convention. Returns the best path found
+    per category plus human-readable warnings for anything ambiguous or missing.
+    """
+    root = Path(root_dir)
+    result = SireneAutoDetection()
+    if not root.is_dir():
+        return result
+
+    matches: dict[str, list[Path]] = {}
+    unrecognized: list[Path] = []
+    for file_path in sorted(root.glob("*.parquet")):
+        category = _classify_parquet_filename(file_path.name)
+        if category is None:
+            unrecognized.append(file_path)
+            continue
+        matches.setdefault(category, []).append(file_path)
+
+    for category, candidates in matches.items():
+        result.paths[category] = str(candidates[0])
+        if len(candidates) > 1:
+            names = ", ".join(p.name for p in candidates)
+            result.warnings.append(
+                f"Plusieurs fichiers correspondent à '{category}' ({names}) — "
+                f"vérifiez que '{candidates[0].name}' est bien le bon fichier."
+            )
+
+    for category in SIRENE_REQUIRED_CATEGORIES:
+        if category not in matches:
+            result.warnings.append(
+                f"Aucun fichier Parquet détecté pour '{category}' (obligatoire) "
+                "à la racine du dossier — renseignez le chemin manuellement."
+            )
+
+    if unrecognized:
+        names = ", ".join(p.name for p in unrecognized)
+        result.warnings.append(
+            f"Fichier(s) Parquet non reconnus, ignorés (nom ne correspond à aucun "
+            f"type SIRENE connu) : {names}"
+        )
+
+    return result
 
 
 def _to_bytes_buffer(file_obj: object) -> BytesIO:

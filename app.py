@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from pathlib import Path
 from time import monotonic
 import unicodedata
 
@@ -20,6 +21,7 @@ from src.config import (
 )
 from src.export_utils import build_export_sheets, save_excel_file, to_excel_bytes
 from src.io_utils import (
+    detect_sirene_parquet_files,
     get_input_file_extension,
     list_excel_sheets,
     read_user_input_file,
@@ -352,27 +354,35 @@ def main() -> None:
         )
 
     step_header(4, "Renseigner les fichiers SIRENE Parquet")
+    detected = detect_sirene_parquet_files(Path(__file__).resolve().parent)
+    etab_default = detected.paths.get("stocketablissement", DEFAULT_STOCKETABLISSEMENT_PATH)
+    ul_default = detected.paths.get("stockunitelegale", DEFAULT_STOCKUNITELEGALE_PATH)
+    succession_default = detected.paths.get("stocketablissementlienssuccession", DEFAULT_SUCCESSION_PATH)
+    historique_default = detected.paths.get("stocketablissementhistorique", DEFAULT_HISTORIQUE_PATH)
+    for warning_message in detected.warnings:
+        st.warning(warning_message)
+
     c1, c2 = st.columns(2)
     with c1:
         etab_path_text = st.text_input(
             "Chemin stocketablissement (obligatoire)",
-            value=DEFAULT_STOCKETABLISSEMENT_PATH,
+            value=etab_default,
             placeholder=r"C:\path\to\StockEtablissement.parquet",
         )
         succession_path_text = st.text_input(
             "Chemin stocketablissementlienssuccession (optionnel)",
-            value=DEFAULT_SUCCESSION_PATH,
+            value=succession_default,
             placeholder=r"C:\path\to\StockEtablissementLiensSuccession.parquet",
         )
     with c2:
         ul_path_text = st.text_input(
             "Chemin stockunitelegale (obligatoire)",
-            value=DEFAULT_STOCKUNITELEGALE_PATH,
+            value=ul_default,
             placeholder=r"C:\path\to\StockUniteLegale.parquet",
         )
         historique_path_text = st.text_input(
             "Chemin stocketablissementhistorique (optionnel)",
-            value=DEFAULT_HISTORIQUE_PATH,
+            value=historique_default,
             placeholder=r"C:\path\to\StockEtablissementHistorique.parquet",
         )
 
