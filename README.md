@@ -10,8 +10,8 @@ Application locale Streamlit pour contrôler une liste d'identifiants SIRET/SIRE
 
 ## Installation
 
-1. Ouvrir un terminal dans le dossier du projet.
-2. Exécuter:
+1. Télécharger le code (zip) et le décompresser.
+2. Lancer le fichier :
 
 ```bat
 create_venv.bat
