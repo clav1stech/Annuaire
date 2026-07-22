@@ -108,6 +108,8 @@ L’interface Streamlit s’ouvre dans le navigateur. Ce script est celui à uti
 
 Téléchargement des fichiers Parquet SIRENE: https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret
 
+> ⚠️ **Attention au format téléchargé : bien prendre les fichiers "(format parquet)"**, et pas les fichiers `.zip` proposés juste au-dessus (qui contiennent des CSV). Sur la page data.gouv.fr, chaque fichier existe en double : une version standard (icône zip, ex. "Sirene : Fichier StockEtablissement - ... .zip") contenant un CSV, et une version "(format parquet)" (icône grille) — c'est **uniquement cette seconde version** qu'il faut télécharger, l'application ne lit pas les CSV.
+
 > ⚠️ **Important : les fichiers Parquet téléchargés doivent être déplacés dans le dossier du projet** (celui où se trouve `app.py`), à côté des scripts `create_venv`/`run_app`. C'est ce qui permet leur détection automatique au lancement (voir [Détection automatique des fichiers](#détection-automatique-des-fichiers-et-que-faire-si-elle-échoue) ci-dessous). Sans ça, il faut renseigner les 4 chemins manuellement à chaque utilisation.
 
 - Obligatoires:
