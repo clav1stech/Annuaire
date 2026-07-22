@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.4 - 2026-07-22
+- Ajout d'un script de mise à jour du code (update_project), détection automatique de nouvelle version au lancement, et clarifications README (poids Parquet, format parquet vs csv).
+
 ## 1.0.3 - 2026-07-22
 - Scripts macOS/Linux renommés en .command (run_app, create_venv) pour un double-clic direct dans Terminal.app au lieu de VSCode ; doc mise à jour en conséquence.
 

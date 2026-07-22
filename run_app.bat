@@ -17,6 +17,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM Verification rapide et non bloquante d'une nouvelle version (timeout court, ignoree si hors ligne).
+python scripts\update_project.py --check-only
+
 echo [INFO] Launching Streamlit app...
 streamlit run app.py
 

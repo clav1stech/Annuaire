@@ -13,5 +13,8 @@ if [ ! -x "$VENV_DIR/bin/python" ]; then
     exit 1
 fi
 
+# Vérification rapide et non bloquante d'une nouvelle version (timeout court, ignorée si hors ligne).
+"$VENV_DIR/bin/python" scripts/update_project.py --check-only || true
+
 echo "[INFO] Lancement de l'application Streamlit..."
 exec "$VENV_DIR/bin/streamlit" run app.py

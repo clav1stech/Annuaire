@@ -17,10 +17,11 @@ Toutes les étapes, dans l'ordre, avec leur fréquence et un lien direct vers la
 | 5 | **Placer ces fichiers Parquet dans le dossier du projet** | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
 | 6 | Lancer l'application (`run_app`) | À chaque usage | [Lancement](#lancement-à-chaque-usage) |
 | 7 | Charger son fichier et exécuter le contrôle | À chaque usage | [Exemple d'usage](#exemple-dusage) |
+| 8 | Mettre à jour le code si une nouvelle version est signalée (`update_project`) | Occasionnel | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
 
 En cas de blocage ou pour savoir ce que l'outil couvre exactement, voir aussi : [FAQ et limites du projet](#faq-et-limites-du-projet).
 
-L'installation (étapes 1 à 3) n'est à refaire que si vous changez de poste ou réinstallez le projet. La mise à jour des fichiers SIRENE (étapes 4 et 5) n'a aucun rapport avec le code : c'est un simple téléchargement/dépôt de fichiers, à refaire régulièrement pour ne pas travailler sur des données obsolètes. Le lancement (étapes 6 et 7) est la seule action répétée à chaque contrôle.
+L'installation (étapes 1 à 3) n'est à refaire que si vous changez de poste ou réinstallez le projet. La mise à jour des fichiers SIRENE (étapes 4 et 5) n'a aucun rapport avec le code : c'est un simple téléchargement/dépôt de fichiers, à refaire régulièrement pour ne pas travailler sur des données obsolètes. Le lancement (étapes 6 et 7) est la seule action répétée à chaque contrôle. La mise à jour du code (étape 8) n'est nécessaire que lorsque le projet évolue sur GitHub.
 
 ## Prérequis
 
@@ -102,6 +103,48 @@ run_app.bat
 
 L’interface Streamlit s’ouvre dans le navigateur. Ce script est celui à utiliser à chaque fois que vous voulez faire tourner un contrôle SIRET/SIREN — contrairement au script d'installation, qui ne sert qu'une fois.
 
+## Mettre à jour le code du projet
+
+Le code du projet évolue sur GitHub (corrections, nouvelles fonctionnalités). Cette mise à jour concerne uniquement les fichiers du projet (`app.py`, `src/`, scripts...) — elle n'a aucun rapport avec les fichiers Parquet SIRENE, qui se mettent à jour séparément (voir [Fichiers SIRENE attendus](#fichiers-sirene-attendus)).
+
+### 1. Détection automatique d'une nouvelle version
+
+À chaque lancement via `run_app.command` / `run_app.bat`, l'application vérifie automatiquement (en quelques secondes, sans bloquer si hors ligne) si une version plus récente existe sur GitHub, en comparant le fichier `VERSION` local à celui de la branche `main` du dépôt. Si une nouvelle version est disponible, un message s'affiche dans le terminal juste avant le lancement de Streamlit, par exemple :
+
+```
+[INFO] Nouvelle version disponible : 1.0.3 -> 1.0.4
+[HINT] Lancer 'python scripts/update_project.py' pour mettre à jour.
+```
+
+Sans connexion internet, ou si GitHub est injoignable, la vérification échoue silencieusement (un simple avertissement) et n'empêche jamais l'application de démarrer.
+
+### 2. Appliquer la mise à jour, sans refaire l'installation
+
+Lancer le script dédié, comme pour l'installation ou le lancement :
+
+**Windows :**
+
+```bat
+update_project.bat
+```
+
+**macOS / Linux :**
+
+```bash
+./update_project.command
+```
+
+Ce script :
+- compare à nouveau la version locale à celle de GitHub (`main`),
+- si une nouvelle version existe, demande confirmation puis télécharge et applique automatiquement les fichiers à jour,
+- **ne touche jamais** à l'environnement virtuel (`.venv_annuaire_sirene`), aux fichiers/dossiers Parquet SIRENE, ni au dossier `export/` — pas besoin de refaire l'installation ni de retélécharger les fichiers SIRENE après une mise à jour du code.
+
+Deux modes de mise à jour, choisis automatiquement selon la façon dont le projet a été obtenu :
+- **Projet téléchargé en zip** (cas standard, voir [Installation](#installation-une-seule-fois)) : le script télécharge l'archive de la branche `main` sur GitHub et copie les fichiers mis à jour par-dessus le dossier du projet. Ce mode ne supprime pas d'anciens fichiers devenus obsolètes ; en cas de gros doute, un nouveau téléchargement zip complet reste la méthode la plus sûre.
+- **Projet cloné avec `git`** (utilisation avancée) : le script utilise `git fetch` puis `git pull --ff-only`. Si des modifications locales non commitées existent, la mise à jour est annulée par sécurité (message explicite) plutôt que de risquer de les écraser.
+
+Si `requirements.txt` a changé dans la mise à jour (nouvelle dépendance ou version), le script l'indique en fin d'exécution : il faut alors relancer `create_venv.bat` / `create_venv.command` avant de relancer l'application. Sinon, `run_app` peut être relancé directement.
+
 ## Fichiers SIRENE attendus
 
 > **Mise à jour mensuelle recommandée.** La base SIRENE est republiée par l'Insee chaque mois. Pour travailler sur des données à jour, retélécharger les fichiers ci-dessous (mêmes noms, écraser les anciens ou pointer l'application vers le nouveau dossier) environ une fois par mois. Cette opération est un simple téléchargement/remplacement de fichiers : elle ne touche pas au code et ne nécessite pas de relancer l'installation.
@@ -113,11 +156,13 @@ Téléchargement des fichiers Parquet SIRENE: https://www.data.gouv.fr/datasets/
 > ⚠️ **Important : les fichiers Parquet téléchargés doivent être déplacés dans le dossier du projet** (celui où se trouve `app.py`), à côté des scripts `create_venv`/`run_app`. C'est ce qui permet leur détection automatique au lancement (voir [Détection automatique des fichiers](#détection-automatique-des-fichiers-et-que-faire-si-elle-échoue) ci-dessous). Sans ça, il faut renseigner les 4 chemins manuellement à chaque utilisation.
 
 - Obligatoires:
-  - `stocketablissement` (fichier parquet ou dossier parquet) — un enregistrement par établissement (SIRET): adresse, statut administratif (actif/fermé), code activité (NAF), date de création, indicateur siège social. C'est la table de base pour le statut et l'adresse de chaque SIRET.
-  - `stockunitelegale` (fichier parquet ou dossier parquet) — un enregistrement par unité légale (SIREN): dénomination/nom, catégorie juridique, statut administratif et statut de diffusion, activité principale. Sert à enrichir chaque SIRET avec l'identité de l'entreprise.
+  - `stocketablissement` (fichier parquet ou dossier parquet, **≈ 2 Go**) — un enregistrement par établissement (SIRET): adresse, statut administratif (actif/fermé), code activité (NAF), date de création, indicateur siège social. C'est la table de base pour le statut et l'adresse de chaque SIRET.
+  - `stockunitelegale` (fichier parquet ou dossier parquet, **≈ 700 Mo**) — un enregistrement par unité légale (SIREN): dénomination/nom, catégorie juridique, statut administratif et statut de diffusion, activité principale. Sert à enrichir chaque SIRET avec l'identité de l'entreprise.
 - Optionnels:
-  - `stocketablissementlienssuccession` — table officielle des liens de succession SIRENE (SIRET prédécesseur → SIRET successeur lors d'un transfert/déménagement d'établissement).
-  - `stocketablissementhistorique` — historique des états successifs d'un établissement (adresses et statuts précédents dans le temps).
+  - `stocketablissementlienssuccession` (**≈ 120 Mo**) — table officielle des liens de succession SIRENE (SIRET prédécesseur → SIRET successeur lors d'un transfert/déménagement d'établissement).
+  - `stocketablissementhistorique` (**≈ 850 Mo**) — historique des états successifs d'un établissement (adresses et statuts précédents dans le temps).
+
+> Poids approximatifs constatés (millésime courant), à titre indicatif : le total avoisine **3,5 à 4 Go** pour les 4 fichiers Parquet. Prévoir une connexion stable et de la place disque en conséquence — un téléchargement interrompu ("network connection lost") doit être relancé.
 
 Impact de l'absence des fichiers optionnels sur le résultat:
 - Sans `stocketablissementlienssuccession`: pour les SIRET fermés, le remplaçant recommandé ne peut plus provenir du lien de succession officiel; l'application retombe sur une règle de repli moins fiable (un autre établissement actif du même SIREN, s'il existe). La note d'analyse ne peut jamais indiquer "Succession", et le compteur "Fermés avec succession officielle" reste à 0.
@@ -243,6 +288,7 @@ Sommaire rapide de cette dernière partie :
 | Question | Section |
 |---|---|
 | Un fichier Parquet n'est pas détecté automatiquement | [Détection automatique des fichiers](#détection-automatique-des-fichiers-et-que-faire-si-elle-échoue) |
+| Une nouvelle version du code est disponible sur GitHub, comment l'appliquer | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
 | Le remplaçant proposé pour un SIRET fermé semble peu fiable | [Impact de l'absence des fichiers optionnels](#fichiers-sirene-attendus) |
 | Je veux savoir ce que l'outil peut faire | [Ce que ça permet](#ce-que-ça-permet) |
 | Je veux savoir ce que l'outil ne fait pas (avant de m'en servir) | [Ce que ça ne permet pas](#ce-que-ça-ne-permet-pas) |
