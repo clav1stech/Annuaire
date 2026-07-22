@@ -43,6 +43,18 @@ Mais si un script affiche une erreur, il faut pouvoir l'exécuter "à la main" p
 
 Ces terminaux restent ouverts pendant que l'application tourne ; les fermer arrête l'application.
 
+### macOS : "impossible d'ouvrir" / "développeur non identifié"
+
+Au premier double-clic sur un fichier `.command`, macOS affiche souvent un avertissement du type *"'run_app.command' Not Opened - Apple could not verify..."*, car le fichier a été téléchargé depuis un navigateur (zip GitHub) et porte un attribut de quarantaine. Le Ctrl+clic → Ouvrir ne suffit plus sur les versions récentes de macOS (Sequoia et ultérieures).
+
+**Solution fiable, à faire une seule fois** après avoir décompressé le dossier du projet : ouvrir Terminal (voir ci-dessus) et taper (en remplaçant le chemin par le vôtre, ou en glissant-déposant le dossier après `cd ` puis en tapant la commande depuis ce dossier) :
+
+```bash
+xattr -dr com.apple.quarantine .
+```
+
+Cette commande retire l'attribut de quarantaine de tout le dossier du projet. Les scripts `.command` s'ouvrent ensuite normalement en double-clic, sans aucun autre avertissement.
+
 ### Installer Python (si nécessaire)
 
 Vérifier d'abord si Python est déjà installé, en ouvrant un terminal (voir ci-dessus) et en tapant :
@@ -55,6 +67,8 @@ python3 --version
 
 - **Windows** : télécharger l'installeur sur [python.org/downloads](https://www.python.org/downloads/) (la dernière version proposée convient). **Important** : lors de l'installation, cocher la case **"Add python.exe to PATH"** avant de cliquer sur "Install Now" — sans cela, les scripts ne trouveront pas Python.
 - **macOS** : télécharger l'installeur sur [python.org/downloads](https://www.python.org/downloads/) (méthode la plus simple si rien n'est encore installé). Alternative pour qui préfère Homebrew : Homebrew n'est pas installé par défaut sur macOS, il faut d'abord l'installer en suivant les instructions sur [brew.sh](https://brew.sh/), puis lancer `brew install python@3.14` (remplacer `3.14` par la version voulue si besoin).
+
+> **macOS + installeur python.org uniquement** : si l'application se lance mais n'affiche jamais de message de version (ni "à jour", ni "nouvelle version disponible"), ouvrir Terminal, se rendre dans le dossier "Python 3.x" du Launchpad/Applications et double-cliquer sur **"Install Certificates.command"** (ou le lancer depuis Terminal : `"/Applications/Python 3.14/Install Certificates.command"`, en adaptant le numéro de version). Cette étape, propre à l'installeur python.org, installe les certificats SSL nécessaires aux vérifications réseau (dont la détection de nouvelle version) ; sans elle, ces vérifications échouent silencieusement. Non nécessaire avec Homebrew ni sous Windows.
 
 Une fois l'installation terminée, fermer et rouvrir le terminal, puis revérifier avec `python3 --version` (ou `python --version`).
 

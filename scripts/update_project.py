@@ -21,19 +21,23 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
 
-REPO_OWNER = "clav1stech"
-REPO_NAME = "Annuaire"
-BRANCH = "main"
-RAW_VERSION_URL = f"https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/{BRANCH}/VERSION"
-ARCHIVE_URL = f"https://github.com/{REPO_OWNER}/{REPO_NAME}/archive/refs/heads/{BRANCH}.zip"
-NETWORK_TIMEOUT_SECONDS = 5
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from src.version_check import (  # noqa: E402
+    BRANCH,
+    PROJECT_ROOT,
+    REPO_NAME,
+    REPO_OWNER,
+    fetch_remote_version,
+    parse_version,
+    read_local_version,
+)
+
+ARCHIVE_URL = f"https://github.com/{REPO_OWNER}/{REPO_NAME}/archive/refs/heads/{BRANCH}.zip"
 
 # Ne jamais toucher à ces chemins lors d'une mise à jour (données locales, environnement, exports).
 PRESERVE_NAMES = {
@@ -43,26 +47,6 @@ PRESERVE_NAMES = {
     ".pytest_cache",
     ".ruff_cache",
 }
-
-
-def parse_version(text: str) -> tuple[int, ...]:
-    try:
-        return tuple(int(part) for part in text.strip().split("."))
-    except ValueError:
-        return (0,)
-
-
-def read_local_version() -> str:
-    version_file = PROJECT_ROOT / "VERSION"
-    return version_file.read_text(encoding="utf-8").strip() if version_file.exists() else "0.0.0"
-
-
-def fetch_remote_version() -> str | None:
-    try:
-        with urllib.request.urlopen(RAW_VERSION_URL, timeout=NETWORK_TIMEOUT_SECONDS) as response:
-            return response.read().decode("utf-8").strip()
-    except (urllib.error.URLError, TimeoutError, OSError):
-        return None
 
 
 def is_git_repo() -> bool:
@@ -150,10 +134,10 @@ def main() -> int:
     args = parser.parse_args()
 
     local_version = read_local_version()
-    remote_version = fetch_remote_version()
+    remote_version, error = fetch_remote_version()
 
     if remote_version is None:
-        print("[WARN] Impossible de vérifier la disponibilité d'une mise à jour (pas de réseau ou GitHub injoignable).")
+        print(f"[WARN] Impossible de vérifier la disponibilité d'une mise à jour : {error}")
         return 0
 
     if parse_version(remote_version) <= parse_version(local_version):

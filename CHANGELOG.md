@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.6 - 2026-07-22
+- UI: affichage clair du statut de vérification de version (à jour / nouvelle version / échec du check, avec raison)
+
 ## 1.0.5 - 2026-07-22
 - Alerte Parquet manquant affichée dès le début de l'app (avant l'upload du fichier) et recherche de fichier Parquet dans un dossier accélérée (arrêt au premier match trouvé).
 

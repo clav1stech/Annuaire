@@ -41,6 +41,28 @@ from src.ui_helpers import (
     show_warnings,
     step_header,
 )
+from src.version_check import get_version_status
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _cached_version_status():
+    return get_version_status()
+
+
+def _render_version_status() -> None:
+    status = _cached_version_status()
+    if status.update_available:
+        st.warning(
+            f"Nouvelle version disponible : {status.local_version} → {status.remote_version}. "
+            "Lancez `update_project` (.command/.bat) pour mettre à jour, ou retéléchargez le zip "
+            "depuis GitHub."
+        )
+    elif status.check_ok:
+        st.caption(f"Version {status.local_version} (à jour).")
+    else:
+        st.caption(
+            f"Version {status.local_version} — vérification de mise à jour impossible : {status.error}"
+        )
+
 
 def _normalize_text(value: object) -> str:
     text = str(value or "").strip().lower()
@@ -236,6 +258,7 @@ def main() -> None:
     st.set_page_config(page_title="Annuaire_SIRENE", layout="wide")
     st.title(APP_TITLE)
     st.caption(APP_DESCRIPTION)
+    _render_version_status()
 
     # Détection des fichiers SIRENE affichée en tout premier, avant même le chargement
     # du fichier utilisateur : un chemin manquant/mal placé doit être visible immédiatement,
