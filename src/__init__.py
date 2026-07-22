@@ -1,6 +1,6 @@
 """Annuaire_SIRENE package."""
 
-from .config import APP_NAME
+from .config import APP_NAME, __version__
 
-__all__ = ["APP_NAME"]
+__all__ = ["APP_NAME", "__version__"]
 

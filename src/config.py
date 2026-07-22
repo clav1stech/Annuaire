@@ -13,6 +13,15 @@ APP_DESCRIPTION = (
     "des fichiers SIRENE Parquet."
 )
 
+
+def _read_version() -> str:
+    """Read the project version from the root VERSION file (single source of truth)."""
+    version_path = Path(__file__).resolve().parent.parent / "VERSION"
+    return version_path.read_text(encoding="utf-8").strip()
+
+
+__version__ = _read_version()
+
 DEFAULT_STOCKETABLISSEMENT_PATH = "StockEtablissement_utf8.parquet"
 DEFAULT_STOCKUNITELEGALE_PATH = "StockUniteLegale_utf8.parquet"
 DEFAULT_SUCCESSION_PATH = "StockEtablissementLiensSuccession_utf8.parquet"
