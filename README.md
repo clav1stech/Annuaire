@@ -223,10 +223,10 @@ Pour éviter tout malentendu sur la nature du résultat produit : l'application 
 
 - Contrôler en masse une liste de SIRET/SIREN par rapport à un millésime SIRENE local : existence, statut (actif/fermé/radié/non trouvé/invalide), adresse, dénomination, code NAF, date de création, etc.
 - Produire des statistiques globales de qualité de la base fournie (taux d'absents, d'invalides, de non-trouvés, de fermés avec/sans remplaçant...) pour prioriser un chantier de nettoyage.
-- Ramener, pour chaque identifiant reconnu, les données SIRENE correspondantes en face des données d'entrée, pour faciliter une revue manuelle.
+- Ramener, pour chaque identifiant reconnu, les données SIRENE correspondantes en face des données d'entrée, pour faciliter une revue manuelle ou semi-automatisée (Excel).
 - Proposer un SIRET de remplacement pour les établissements fermés : de façon fiable lorsque le lien officiel de succession SIRENE (`stocketablissementlienssuccession`) l'identifie, ou sinon via une règle de repli plus approximative (un autre établissement actif du même SIREN, sans certitude que ce soit le véritable successeur).
 - Repérer les identifiants en doublon, mal formés (échec de la clé de contrôle Luhn, mauvaise longueur), ou associés à un pays autre que la France.
-- Produire un export Excel structuré, destiné à une lecture/exploitation manuelle par un analyste.
+- Produire un export Excel structuré, destiné à une lecture/exploitation manuelle/excel par un analyste.
 
 ### Ce que ça ne permet pas
 
