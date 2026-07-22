@@ -231,8 +231,10 @@ def resolve_parquet_source(path_text: str, label: str, required: bool = True) ->
         raise ValueError(f"Path does not exist for '{label}': {path}")
 
     if path.is_dir():
-        parquet_files = list(path.rglob("*.parquet"))
-        if not parquet_files:
+        # Short-circuit on the first match instead of listing the whole subtree: a directory
+        # that turns out to hold no parquet file (wrong folder, still-empty download...) would
+        # otherwise force a full recursive walk just to conclude there is nothing to find.
+        if next(path.rglob("*.parquet"), None) is None:
             raise ValueError(f"No .parquet file found in directory for '{label}': {path}")
         return str(path / "**/*.parquet").replace("\\", "/")
 

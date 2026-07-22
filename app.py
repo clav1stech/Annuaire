@@ -21,6 +21,7 @@ from src.config import (
 )
 from src.export_utils import build_export_sheets, save_excel_file, to_excel_bytes
 from src.io_utils import (
+    SIRENE_REQUIRED_CATEGORIES,
     detect_sirene_parquet_files,
     get_input_file_extension,
     list_excel_sheets,
@@ -235,6 +236,24 @@ def main() -> None:
     st.set_page_config(page_title="Annuaire_SIRENE", layout="wide")
     st.title(APP_TITLE)
     st.caption(APP_DESCRIPTION)
+
+    # Détection des fichiers SIRENE affichée en tout premier, avant même le chargement
+    # du fichier utilisateur : un chemin manquant/mal placé doit être visible immédiatement,
+    # pas seulement après avoir rempli les étapes précédentes.
+    detected = detect_sirene_parquet_files(Path(__file__).resolve().parent)
+    missing_required = [
+        category for category in SIRENE_REQUIRED_CATEGORIES if category not in detected.paths
+    ]
+    if missing_required:
+        st.error(
+            "Fichier(s) Parquet SIRENE obligatoire(s) introuvable(s) à la racine du dossier du "
+            f"projet : {', '.join(missing_required)}. Téléchargez-les et placez-les à côté de "
+            "`app.py`, ou renseignez le chemin manuellement à l'étape 4 ci-dessous "
+            "(voir la section 'Fichiers SIRENE attendus' du README)."
+        )
+    for warning_message in detected.warnings:
+        st.warning(warning_message)
+
     if "output_path_locked" not in st.session_state:
         st.session_state["output_path_locked"] = False
     default_output_path = str(build_default_output_path())
@@ -354,13 +373,10 @@ def main() -> None:
         )
 
     step_header(4, "Renseigner les fichiers SIRENE Parquet")
-    detected = detect_sirene_parquet_files(Path(__file__).resolve().parent)
     etab_default = detected.paths.get("stocketablissement", DEFAULT_STOCKETABLISSEMENT_PATH)
     ul_default = detected.paths.get("stockunitelegale", DEFAULT_STOCKUNITELEGALE_PATH)
     succession_default = detected.paths.get("stocketablissementlienssuccession", DEFAULT_SUCCESSION_PATH)
     historique_default = detected.paths.get("stocketablissementhistorique", DEFAULT_HISTORIQUE_PATH)
-    for warning_message in detected.warnings:
-        st.warning(warning_message)
 
     c1, c2 = st.columns(2)
     with c1:

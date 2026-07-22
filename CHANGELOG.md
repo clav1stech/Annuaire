@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.5 - 2026-07-22
+- Alerte Parquet manquant affichée dès le début de l'app (avant l'upload du fichier) et recherche de fichier Parquet dans un dossier accélérée (arrêt au premier match trouvé).
+
 ## 1.0.4 - 2026-07-22
 - Ajout d'un script de mise à jour du code (update_project), détection automatique de nouvelle version au lancement, et clarifications README (poids Parquet, format parquet vs csv).
 
