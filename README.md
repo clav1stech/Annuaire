@@ -4,23 +4,29 @@ Application locale Streamlit pour contrôler une liste d'identifiants SIRET/SIRE
 
 Aucune compétence en programmation n'est requise pour utiliser l'application : ce README détaille chaque étape, y compris l'installation de Python et l'usage d'un terminal si vous ne les avez jamais utilisés.
 
-## Ce qu'il faut faire, et à quelle fréquence
+## Sommaire / mode opératoire express
 
-Trois temps bien distincts :
+Toutes les étapes, dans l'ordre, avec leur fréquence et un lien direct vers la section détaillée :
 
-| Fréquence | Action | Section |
-|---|---|---|
-| **Une seule fois** (à l'installation du poste) | Installer Python, télécharger le projet, exécuter le script d'installation | [Installation (une seule fois)](#installation-une-seule-fois) |
-| **Environ une fois par mois** | Télécharger la nouvelle base SIRENE (fichiers Parquet) sur data.gouv.fr, pour disposer de données à jour | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
-| **À chaque utilisation** | Lancer l'application et faire tourner un contrôle | [Lancement (à chaque usage)](#lancement-à-chaque-usage) |
+| # | Étape | Fréquence | Section |
+|---|---|---|---|
+| 1 | Installer Python | Une fois | [Installer Python](#installer-python-si-nécessaire) |
+| 2 | Télécharger le projet et le décompresser | Une fois | [Installation](#installation-une-seule-fois) |
+| 3 | Lancer le script d'installation (`create_venv`) | Une fois | [Installation](#installation-une-seule-fois) |
+| 4 | Télécharger les fichiers SIRENE (Parquet) sur data.gouv.fr | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
+| 5 | **Placer ces fichiers Parquet dans le dossier du projet** | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
+| 6 | Lancer l'application (`run_app`) | À chaque usage | [Lancement](#lancement-à-chaque-usage) |
+| 7 | Charger son fichier et exécuter le contrôle | À chaque usage | [Exemple d'usage](#exemple-dusage) |
 
-L'installation (étape 1) n'est donc à refaire que si vous changez de poste ou réinstallez le projet. La mise à jour des fichiers SIRENE (étape 2) n'a aucun rapport avec le code : c'est un simple téléchargement de fichiers, à faire régulièrement pour ne pas travailler sur des données obsolètes. Le lancement (étape 3) est la seule action répétée à chaque contrôle.
+En cas de blocage ou pour savoir ce que l'outil couvre exactement, voir aussi : [FAQ et limites du projet](#faq-et-limites-du-projet).
+
+L'installation (étapes 1 à 3) n'est à refaire que si vous changez de poste ou réinstallez le projet. La mise à jour des fichiers SIRENE (étapes 4 et 5) n'a aucun rapport avec le code : c'est un simple téléchargement/dépôt de fichiers, à refaire régulièrement pour ne pas travailler sur des données obsolètes. Le lancement (étapes 6 et 7) est la seule action répétée à chaque contrôle.
 
 ## Prérequis
 
 - Windows 10/11 **ou** macOS (Linux fonctionne aussi via les scripts `.sh`)
 - Python 3.11 à 3.14 (plage officiellement testée) — installer de préférence la dernière version disponible
-- Fichiers SIRENE au format Parquet disponibles en local
+- Fichiers SIRENE au format Parquet disponibles en local, **déplacés dans le dossier du projet** (voir [Fichiers SIRENE attendus](#fichiers-sirene-attendus))
 
 ### Utiliser un terminal (pour dépannage ou utilisation avancée)
 
@@ -94,6 +100,8 @@ L’interface Streamlit s’ouvre dans le navigateur. Ce script est celui à uti
 > **Mise à jour mensuelle recommandée.** La base SIRENE est republiée par l'Insee chaque mois. Pour travailler sur des données à jour, retélécharger les fichiers ci-dessous (mêmes noms, écraser les anciens ou pointer l'application vers le nouveau dossier) environ une fois par mois. Cette opération est un simple téléchargement/remplacement de fichiers : elle ne touche pas au code et ne nécessite pas de relancer l'installation.
 
 Téléchargement des fichiers Parquet SIRENE: https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret
+
+> ⚠️ **Important : les fichiers Parquet téléchargés doivent être déplacés dans le dossier du projet** (celui où se trouve `app.py`), à côté des scripts `create_venv`/`run_app`. C'est ce qui permet leur détection automatique au lancement (voir [Détection automatique des fichiers](#détection-automatique-des-fichiers-et-que-faire-si-elle-échoue) ci-dessous). Sans ça, il faut renseigner les 4 chemins manuellement à chaque utilisation.
 
 - Obligatoires:
   - `stocketablissement` (fichier parquet ou dossier parquet) — un enregistrement par établissement (SIRET): adresse, statut administratif (actif/fermé), code activité (NAF), date de création, indicateur siège social. C'est la table de base pour le statut et l'adresse de chaque SIRET.
@@ -215,7 +223,16 @@ Lancement depuis la racine du projet :
 python scripts/export_project.py
 ```
 
-## Ce que permet / ne permet pas ce projet
+## FAQ et limites du projet
+
+Sommaire rapide de cette dernière partie :
+
+| Question | Section |
+|---|---|
+| Un fichier Parquet n'est pas détecté automatiquement | [Détection automatique des fichiers](#détection-automatique-des-fichiers-et-que-faire-si-elle-échoue) |
+| Le remplaçant proposé pour un SIRET fermé semble peu fiable | [Impact de l'absence des fichiers optionnels](#fichiers-sirene-attendus) |
+| Je veux savoir ce que l'outil peut faire | [Ce que ça permet](#ce-que-ça-permet) |
+| Je veux savoir ce que l'outil ne fait pas (avant de m'en servir) | [Ce que ça ne permet pas](#ce-que-ça-ne-permet-pas) |
 
 Pour éviter tout malentendu sur la nature du résultat produit : l'application **compare une liste d'identifiants avec la base SIRENE** pour produire des statistiques globales de qualité et **ramener les informations correspondantes** (établissement + unité légale) à côté de chaque identifiant. Elle ne va pas plus loin que ça.
 
