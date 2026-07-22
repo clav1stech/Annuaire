@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Création de l'environnement virtuel et installation des dépendances (macOS / Linux).
 # Équivalent de create_venv.bat pour les postes non-Windows.
+# Extension .command : double-clic dans le Finder l'ouvre directement dans Terminal.app.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -59,4 +60,4 @@ echo "[INFO] pyarrow et duckdb sont restreints aux wheels précompilées (pas de
     --only-binary=pyarrow --only-binary=duckdb \
     -r requirements.txt
 
-echo "[SUCCESS] Environnement prêt. Lancer l'application avec ./run_app.sh"
+echo "[SUCCESS] Environnement prêt. Lancer l'application avec ./run_app.command"

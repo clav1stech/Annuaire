@@ -7,7 +7,7 @@ vivent dans [docs/CLAUDE.md](docs/CLAUDE.md) et [docs/CONVENTIONS.md](docs/CONVE
 ## Mise en place
 
 ```bash
-./create_venv.sh          # macOS / Linux (create_venv.bat sous Windows)
+./create_venv.command     # macOS / Linux (create_venv.bat sous Windows)
 pip install -e ".[dev]"   # dépendances de développement (pytest, ruff)
 ```
 

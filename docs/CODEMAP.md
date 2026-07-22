@@ -11,7 +11,7 @@
 - `CONTRIBUTING.md` — flux de contribution (résumé, renvoie vers `docs/`).
 - `pyproject.toml` — métadonnées du package, dépendances (dont `[dev]`), config `pytest`/`ruff`.
 - `requirements.txt` — dépendances Python (utilisé par les scripts d'installation).
-- `create_venv.sh` / `run_app.sh` — installation et lancement (macOS / Linux).
+- `create_venv.command` / `run_app.command` — installation et lancement (macOS / Linux ; extension `.command` pour ouverture directe dans Terminal.app au double-clic).
 - `create_venv.bat` / `run_app.bat` — installation et lancement (Windows).
 
 ## tests/

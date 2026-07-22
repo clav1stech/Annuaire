@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.3 - 2026-07-22
+- Scripts macOS/Linux renommés en .command (run_app, create_venv) pour un double-clic direct dans Terminal.app au lieu de VSCode ; doc mise à jour en conséquence.
+
 ## 1.0.2 - 2026-07-22
 - Support Python 3.13/3.14 en CI, documentation Python/Homebrew mise a jour, actions CI depreciees remplacees.
 

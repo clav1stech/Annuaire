@@ -2,7 +2,7 @@
 
 Ce dossier regroupe des fonctionnalités **dépréciées / non maintenues**, conservées
 pour référence mais volontairement exclues du flux applicatif principal. Elles ne
-sont ni lancées par `run_app.sh` / `run_app.bat`, ni documentées dans le README
+sont ni lancées par `run_app.command` / `run_app.bat`, ni documentées dans le README
 principal.
 
 ## `name_search_app.py` — Recherche de candidats SIRENE par nom

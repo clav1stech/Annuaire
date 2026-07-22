@@ -68,7 +68,7 @@
 - Cette consigne prévaut sur toute instruction implicite de diagnostic qui nécessiterait d'ouvrir les Parquet.
 
 ## Encodage UTF-8 (obligatoire)
-- Tous les fichiers texte (`.py`, `.md`, `.bat`, `.sh`, `.txt`) sont lus/écrits en UTF-8.
+- Tous les fichiers texte (`.py`, `.md`, `.bat`, `.command`, `.txt`) sont lus/écrits en UTF-8.
 - Ne jamais valider de texte corrompu de type mojibake (accents transformés en caractères incohérents).
 - Vérifier explicitement les accents français dans l'UI Streamlit, le report Excel (dont la feuille dictionnaire) et le README avant livraison.
 - En cas de doute d'affichage/terminal, vérifier le contenu réel du fichier avant sauvegarde. Si un environnement ne gère pas correctement les accents, privilégier temporairement une formulation ASCII propre plutôt qu'un texte corrompu.

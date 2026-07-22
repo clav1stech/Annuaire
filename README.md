@@ -24,16 +24,21 @@ L'installation (étapes 1 à 3) n'est à refaire que si vous changez de poste ou
 
 ## Prérequis
 
-- Windows 10/11 **ou** macOS (Linux fonctionne aussi via les scripts `.sh`)
+- Windows 10/11 **ou** macOS (Linux fonctionne aussi via les scripts `.command`)
 - Python 3.11 à 3.14 (plage officiellement testée) — installer de préférence la dernière version disponible
 - Fichiers SIRENE au format Parquet disponibles en local, **déplacés dans le dossier du projet** (voir [Fichiers SIRENE attendus](#fichiers-sirene-attendus))
 
 ### Utiliser un terminal (pour dépannage ou utilisation avancée)
 
-Les scripts d'installation et de lancement peuvent s'utiliser en double-cliquant dessus, sans jamais ouvrir de terminal. Mais si un script affiche une erreur, il faut pouvoir l'exécuter "à la main" pour lire le message :
+Les scripts d'installation et de lancement peuvent s'utiliser en double-cliquant dessus, sans jamais ouvrir de terminal manuellement :
+
+- **Windows** : double-clic sur `create_venv.bat` / `run_app.bat` ouvre directement une invite de commandes.
+- **macOS** : les scripts sont au format `.command` (et non `.sh`) précisément pour qu'un double-clic dans le Finder les ouvre directement dans **Terminal.app**, sans configuration ni "Ouvrir avec" à modifier.
+
+Mais si un script affiche une erreur, il faut pouvoir l'exécuter "à la main" pour lire le message :
 
 - **Windows** : touche `Windows`, taper `PowerShell` ou `Invite de commandes`, ouvrir l'application. Se déplacer dans le dossier du projet avec `cd` (exemple : `cd C:\Users\VotreNom\Downloads\Annuaire_SIRENE`), puis lancer le script en tapant son nom (ex. `create_venv.bat`) et Entrée.
-- **macOS** : ouvrir **Terminal** (via Spotlight : `Cmd + Espace`, taper `Terminal`, Entrée). Se déplacer dans le dossier du projet avec `cd` (exemple : `cd ~/Downloads/Annuaire_SIRENE`) — astuce : taper `cd ` (avec l'espace) puis glisser-déposer le dossier depuis le Finder dans la fenêtre du Terminal complète automatiquement le chemin. Lancer ensuite le script avec `./create_venv.sh`.
+- **macOS** : ouvrir **Terminal** (via Spotlight : `Cmd + Espace`, taper `Terminal`, Entrée). Se déplacer dans le dossier du projet avec `cd` (exemple : `cd ~/Downloads/Annuaire_SIRENE`) — astuce : taper `cd ` (avec l'espace) puis glisser-déposer le dossier depuis le Finder dans la fenêtre du Terminal complète automatiquement le chemin. Lancer ensuite le script avec `./create_venv.command`.
 
 Ces terminaux restent ouverts pendant que l'application tourne ; les fermer arrête l'application.
 
@@ -66,7 +71,7 @@ create_venv.bat
 **macOS / Linux :**
 
 ```bash
-./create_venv.sh
+./create_venv.command
 ```
 
 Ces scripts font la même chose :
@@ -90,8 +95,10 @@ run_app.bat
 **macOS / Linux :**
 
 ```bash
-./run_app.sh
+./run_app.command
 ```
+
+> Le script est au format `.command` : un double-clic dans le Finder l'ouvre directement dans Terminal.app. Si un éditeur de code (VSCode, etc.) s'ouvre à la place, c'est probablement qu'une copie `run_app.sh` traîne encore dans le dossier — utiliser `run_app.command`, ou lancer manuellement depuis un terminal (voir [Utiliser un terminal](#utiliser-un-terminal-pour-dépannage-ou-utilisation-avancée)).
 
 L’interface Streamlit s’ouvre dans le navigateur. Ce script est celui à utiliser à chaque fois que vous voulez faire tourner un contrôle SIRET/SIREN — contrairement au script d'installation, qui ne sert qu'une fois.
 
