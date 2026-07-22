@@ -223,6 +223,10 @@ Lancement depuis la racine du projet :
 python scripts/export_project.py
 ```
 
+Options utiles :
+- `--enable-zip-export true` pour générer aussi une archive `.zip` du dossier snapshot,
+- `--include-extra-items true` pour archiver en plus les éléments lourds (environnements virtuels, etc.).
+
 ## FAQ et limites du projet
 
 Sommaire rapide de cette dernière partie :
@@ -247,14 +251,10 @@ Pour éviter tout malentendu sur la nature du résultat produit : l'application 
 
 ### Ce que ça ne permet pas
 
-- **Retrouver un identifiant absent ou invalide.** L'application ne fait aucune recherche par nom d'entreprise, adresse ou autre critère flou (pas de rapprochement approximatif) : sans SIRET/SIREN exploitable en entrée, la ligne reste "Absent" ou "Invalide", point final.
+- **Retrouver un identifiant absent ou invalide.** L'application ne fait aucune recherche par nom d'entreprise, adresse ou autre critère flou (pas de rapprochement approximatif) : sans SIRET/SIREN exploitable en entrée, la ligne reste "Absent" ou "Invalide".
 - **Identifier le bon établissement à partir d'un SIREN seul.** Si seul le SIREN est fourni (pas de SIRET), l'application retombe systématiquement sur le **siège social** de l'entreprise — qui peut ne pas être l'établissement réellement concerné par la relation fournisseur. Sur une entreprise multi-établissements, cela peut renvoyer une adresse différente de celle attendue et créer de faux doublons SIRET.
 - **Enrichir les fournisseurs étrangers.** La base SIRENE ne couvre que la France : un identifiant hors France peut être compté et éventuellement conservé dans l'analyse (si son format est valide), mais aucune donnée d'établissement n'est récupérée pour ces lignes.
 - **Garantir la présence des données pour les auto-entrepreneurs/personnes physiques.** Certaines unités légales (notamment micro-entrepreneurs) sont "non diffusibles" (marqueur `[ND]`) dans les fichiers SIRENE eux-mêmes, pour des raisons de protection des données personnelles. L'application détecte ce cas (`analysis_nd_detecte`) mais ne peut pas afficher une information que la base ne diffuse pas.
 - **Produire un fichier corrigé prêt à réimporter dans un ERP.** L'export Excel est un rapport d'analyse et de contrôle qualité, pas un fichier de correction au format d'import d'un ERP : il n'y a ni mapping vers un schéma cible, ni validation de compatibilité, ni écriture automatique dans un système tiers.
 - **Comparer/croiser automatiquement les données SIRENE avec celles déjà présentes chez l'utilisateur.** L'application affiche les données SIRENE (nom, adresse...) à côté des données d'entrée, mais ne les confronte pas entre elles : elle ne signale pas qu'une adresse ou une raison sociale diffère de celle enregistrée côté client/ERP. **Ce travail de comparaison et d'arbitrage reste entièrement à la charge de l'utilisateur.**
 - **Fournir une donnée plus fraîche que le millésime SIRENE utilisé.** Il n'y a aucun appel en direct à une API Insee/INPI : la fiabilité du résultat dépend uniquement de la date des fichiers Parquet fournis (voir la mise à jour mensuelle recommandée plus haut).
-
-Options utiles :
-- `--enable-zip-export true` pour générer aussi une archive `.zip` du dossier snapshot,
-- `--include-extra-items true` pour archiver en plus les éléments lourds (environnements virtuels, etc.).
