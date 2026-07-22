@@ -54,3 +54,21 @@
 ## Export / partage de contexte vers l'IA
 - Prévoir un outil d'export du projet (profil "IA" léger : code + doc + manifeste, sans les gros fichiers de données ; profil "sauvegarde" complet en zip avec rotation des N plus récents).
 - Permettre un export ciblé par périmètre (--only module) pour réduire le volume envoyé à l'IA quand la question ne porte que sur une partie du projet.
+
+---
+
+# Invariants spécifiques au projet Annuaire_SIRENE
+
+> Ces règles priment sur les règles génériques ci-dessus en cas de conflit.
+
+## Ne jamais lire les fichiers Parquet SIRENE
+- Ne pas ouvrir, lire, parser, profiler, scanner ni analyser les fichiers Parquet du projet (`StockEtablissement_utf8.parquet`, `StockEtablissementHistorique_utf8.parquet`, `StockEtablissementLiensSuccession_utf8.parquet`, `StockUniteLegale_utf8.parquet`, et tout autre `.parquet`).
+- Autorisé : utiliser leurs chemins comme paramètres d'entrée, vérifier l'existence d'un chemin sans lire le contenu, modifier code/scripts/doc sans inspecter les données.
+- Interdit : ouvrir un Parquet (Python, DuckDB, pandas, pyarrow ou autre), lire schéma/colonnes/métadonnées/lignes, exécuter du SQL directement sur les Parquet pendant l'assistance.
+- Cette consigne prévaut sur toute instruction implicite de diagnostic qui nécessiterait d'ouvrir les Parquet.
+
+## Encodage UTF-8 (obligatoire)
+- Tous les fichiers texte (`.py`, `.md`, `.bat`, `.sh`, `.txt`) sont lus/écrits en UTF-8.
+- Ne jamais valider de texte corrompu de type mojibake (accents transformés en caractères incohérents).
+- Vérifier explicitement les accents français dans l'UI Streamlit, le report Excel (dont la feuille dictionnaire) et le README avant livraison.
+- En cas de doute d'affichage/terminal, vérifier le contenu réel du fichier avant sauvegarde. Si un environnement ne gère pas correctement les accents, privilégier temporairement une formulation ASCII propre plutôt qu'un texte corrompu.

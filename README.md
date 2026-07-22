@@ -4,29 +4,47 @@ Application locale Streamlit pour contrôler une liste d'identifiants SIRET/SIRE
 
 ## Prérequis
 
-- Windows 10/11
+- Windows 10/11 **ou** macOS (Linux fonctionne aussi via les scripts `.sh`)
 - Python 3.11 ou 3.12 (plage officiellement testée), ou Python 3.14 (supporté grâce aux wheels précompilées `pyarrow`/`duckdb`, non testé aussi largement)
 - Fichiers SIRENE au format Parquet disponibles en local
 
 ## Installation
 
 1. Télécharger le code (zip) et le décompresser.
-2. Lancer le fichier :
+2. Lancer le script d'installation adapté à votre système :
+
+**Windows :**
 
 ```bat
 create_venv.bat
 ```
 
-Ce script:
-- affiche la version de Python détectée et avertit si elle est hors de la plage testée (3.11-3.12), en demandant confirmation avant de continuer,
-- crée `.venv_annuaire_sirene` si nécessaire,
-- installe/upgrade `pip`,
-- installe les dépendances depuis `requirements.txt`, en forçant `pyarrow` et `duckdb` (`>=15,<25` et `>=1.1,<2`) à utiliser uniquement des wheels précompilées (`--only-binary`) pour éviter une compilation depuis les sources qui échouerait faute de cmake/Visual Studio.
+**macOS / Linux :**
+
+```bash
+./create_venv.sh
+```
+
+Ces scripts font la même chose :
+- affichent la version de Python détectée et avertissent si elle est hors de la plage testée (3.11-3.12), en demandant confirmation avant de continuer,
+- créent `.venv_annuaire_sirene` si nécessaire,
+- installent/upgradent `pip`,
+- installent les dépendances depuis `requirements.txt`, en forçant `pyarrow` et `duckdb` à utiliser uniquement des wheels précompilées (`--only-binary`) pour éviter une compilation depuis les sources.
+
+> macOS : si `python3` n'est pas installé, utiliser [python.org](https://www.python.org/downloads/) ou `brew install python@3.12`. Le bouton **Browse...** de sélection de fichier repose sur Tkinter (inclus avec les installeurs python.org ; avec Homebrew : `brew install python-tk@3.12`). En son absence, le chemin de sortie reste saisissable manuellement.
 
 ## Lancement
 
+**Windows :**
+
 ```bat
 run_app.bat
+```
+
+**macOS / Linux :**
+
+```bash
+./run_app.sh
 ```
 
 L’interface Streamlit s’ouvre dans le navigateur.

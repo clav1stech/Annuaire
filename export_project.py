@@ -1,7 +1,7 @@
 """Project export/versioning helper for backup and AI handoff.
 
 This script exports only source/documentation files that matter for code review:
-- included: .py, .bat, .md, .txt
+- included: .py, .bat, .sh, .md, .txt
 - excluded: parquet data, virtual envs, caches, export outputs, requirements.txt
 
 Outputs are created in ./export with automatic semantic patch increment (vX.Y.Z):
@@ -29,7 +29,7 @@ VERSION_Y = 2
 ENABLE_ZIP_EXPORT = False
 ENABLE_EXTRA_ARCHIVE_EXPORT = False
 
-INCLUDED_EXTENSIONS = {".py", ".bat", ".md", ".txt"}
+INCLUDED_EXTENSIONS = {".py", ".bat", ".sh", ".md", ".txt"}
 EXCLUDED_FILENAMES = {"requirements.txt"}
 EXCLUDED_DIRNAMES = {
     ".git",
