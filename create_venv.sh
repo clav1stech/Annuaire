@@ -10,7 +10,7 @@ echo "[INFO] Working directory: $(pwd)"
 
 # --- Détection de l'interpréteur Python ---------------------------------------
 PYTHON_BIN=""
-for candidate in python3.12 python3.11 python3 python; do
+for candidate in python3.14 python3.13 python3.12 python3.11 python3 python; do
     if command -v "$candidate" >/dev/null 2>&1; then
         PYTHON_BIN="$candidate"
         break
@@ -19,7 +19,7 @@ done
 
 if [ -z "$PYTHON_BIN" ]; then
     echo "[ERROR] Aucun interpréteur Python trouvé."
-    echo "[HINT] Installer Python 3.11 ou 3.12 (python.org ou 'brew install python@3.12')."
+    echo "[HINT] Installer Python 3.11 à 3.14 (python.org ou 'brew install python@3.12')."
     exit 1
 fi
 
@@ -28,8 +28,8 @@ echo "[INFO] Python détecté: $PYTHON_BIN ($PY_VERSION)"
 
 PY_MAJOR="${PY_VERSION%%.*}"
 PY_MINOR="$(echo "$PY_VERSION" | cut -d. -f2)"
-if [ "$PY_MAJOR" != "3" ] || [ "$PY_MINOR" -lt 11 ] || [ "$PY_MINOR" -gt 12 ]; then
-    echo "[WARN] Python $PY_VERSION est hors de la plage officiellement testée (3.11-3.12)."
+if [ "$PY_MAJOR" != "3" ] || [ "$PY_MINOR" -lt 11 ] || [ "$PY_MINOR" -gt 14 ]; then
+    echo "[WARN] Python $PY_VERSION est hors de la plage officiellement testée (3.11-3.14)."
     echo "[WARN] L'installation peut fonctionner grâce aux wheels précompilées de pyarrow/duckdb, sans garantie."
     read -r -p "Continuer avec Python $PY_VERSION ? [o/N] " reply
     case "$reply" in

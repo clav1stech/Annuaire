@@ -19,7 +19,7 @@ L'installation (étape 1) n'est donc à refaire que si vous changez de poste ou 
 ## Prérequis
 
 - Windows 10/11 **ou** macOS (Linux fonctionne aussi via les scripts `.sh`)
-- Python 3.11 ou 3.12 (plage officiellement testée), ou Python 3.14 (supporté grâce aux wheels précompilées `pyarrow`/`duckdb`, non testé aussi largement)
+- Python 3.11 à 3.14 (plage officiellement testée) — installer de préférence la dernière version disponible
 - Fichiers SIRENE au format Parquet disponibles en local
 
 ### Utiliser un terminal (si vous n'en avez jamais ouvert)
@@ -39,10 +39,10 @@ Vérifier d'abord si Python est déjà installé, en ouvrant un terminal (voir c
 python3 --version
 ```
 
-(sous Windows, essayer `python --version` si `python3` n'est pas reconnu). Si une version 3.11, 3.12 ou 3.14 s'affiche, Python est prêt et l'étape suivante peut être ignorée. Si la commande est inconnue, ou si une version antérieure à 3.11 s'affiche :
+(sous Windows, essayer `python --version` si `python3` n'est pas reconnu). Si une version entre 3.11 et 3.14 s'affiche, Python est prêt et l'étape suivante peut être ignorée. Si la commande est inconnue, ou si une version antérieure à 3.11 s'affiche :
 
-- **Windows** : télécharger l'installeur sur [python.org/downloads](https://www.python.org/downloads/) (version 3.12 recommandée). **Important** : lors de l'installation, cocher la case **"Add python.exe to PATH"** avant de cliquer sur "Install Now" — sans cela, les scripts ne trouveront pas Python.
-- **macOS** : télécharger l'installeur sur [python.org/downloads](https://www.python.org/downloads/), ou via Homebrew si déjà installé : `brew install python@3.12`.
+- **Windows** : télécharger l'installeur sur [python.org/downloads](https://www.python.org/downloads/) (la dernière version proposée convient). **Important** : lors de l'installation, cocher la case **"Add python.exe to PATH"** avant de cliquer sur "Install Now" — sans cela, les scripts ne trouveront pas Python.
+- **macOS** : télécharger l'installeur sur [python.org/downloads](https://www.python.org/downloads/) (méthode la plus simple si rien n'est encore installé). Alternative pour qui préfère Homebrew : Homebrew n'est pas installé par défaut sur macOS, il faut d'abord l'installer en suivant les instructions sur [brew.sh](https://brew.sh/), puis lancer `brew install python@3.14` (remplacer `3.14` par la version voulue si besoin).
 
 Une fois l'installation terminée, fermer et rouvrir le terminal, puis revérifier avec `python3 --version` (ou `python --version`).
 
@@ -64,12 +64,12 @@ create_venv.bat
 ```
 
 Ces scripts font la même chose :
-- affichent la version de Python détectée et avertissent si elle est hors de la plage testée (3.11-3.12), en demandant confirmation avant de continuer,
+- affichent la version de Python détectée et avertissent si elle est hors de la plage testée (3.11-3.14), en demandant confirmation avant de continuer,
 - créent `.venv_annuaire_sirene` si nécessaire,
 - installent/upgradent `pip`,
 - installent les dépendances depuis `requirements.txt`, en forçant `pyarrow` et `duckdb` à utiliser uniquement des wheels précompilées (`--only-binary`) pour éviter une compilation depuis les sources.
 
-> macOS : si `python3` n'est pas installé, utiliser [python.org](https://www.python.org/downloads/) ou `brew install python@3.12`. Le bouton **Browse...** de sélection de fichier repose sur Tkinter (inclus avec les installeurs python.org ; avec Homebrew : `brew install python-tk@3.12`). En son absence, le chemin de sortie reste saisissable manuellement.
+> macOS : si `python3` n'est pas installé, utiliser [python.org](https://www.python.org/downloads/) (voir [Installer Python](#installer-python-si-nécessaire) ci-dessus). Le bouton **Browse...** de sélection de fichier repose sur Tkinter (inclus avec les installeurs python.org ; avec Homebrew, si utilisé à la place : `brew install python-tk@3.14`, en adaptant le numéro de version si besoin). En son absence, le chemin de sortie reste saisissable manuellement.
 
 Cette étape ne prend que quelques minutes et **n'est à refaire qu'une fois** (sauf changement de poste ou de dossier du projet). Le résultat est un dossier `.venv_annuaire_sirene` contenant tout ce dont l'application a besoin pour fonctionner ; il n'y a rien d'autre à installer par la suite.
 

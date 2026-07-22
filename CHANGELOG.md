@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.2 - 2026-07-22
+- Support Python 3.13/3.14 en CI, documentation Python/Homebrew mise a jour, actions CI depreciees remplacees.
+
 Toute nouvelle entrée est ajoutée par `scripts/update_changelog.py` (voir `docs/CLAUDE.md` § Changelog), jamais saisie à la main.
 
 ## 1.0.1 - 2026-07-22

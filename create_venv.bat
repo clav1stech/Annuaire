@@ -26,9 +26,9 @@ if defined PY_VERSION (
         set "PY_MINOR=%%B"
     )
     set "PY_IN_RANGE=0"
-    if "!PY_MAJOR!"=="3" if !PY_MINOR! GEQ 11 if !PY_MINOR! LEQ 12 set "PY_IN_RANGE=1"
+    if "!PY_MAJOR!"=="3" if !PY_MINOR! GEQ 11 if !PY_MINOR! LEQ 14 set "PY_IN_RANGE=1"
     if "!PY_IN_RANGE!"=="0" (
-        echo [WARN] Python !PY_VERSION! est hors de la plage officiellement testee de ce projet ^(3.11-3.12^).
+        echo [WARN] Python !PY_VERSION! est hors de la plage officiellement testee de ce projet ^(3.11-3.14^).
         echo [WARN] L'installation peut fonctionner grace aux wheels precompilees de pyarrow/duckdb, mais n'est pas garantie.
         choice /C ON /N /M "Continuer avec Python !PY_VERSION! (O) ou annuler (N) ? "
         if errorlevel 2 (
@@ -70,7 +70,7 @@ if not exist "%VENV_DIR%\Scripts\python.exe" (
             where python >nul 2>&1
             if errorlevel 1 (
                 echo [ERROR] No Python interpreter found.
-                echo [HINT] Install Python 3.11/3.12 or update create_venv.bat path.
+                echo [HINT] Install Python 3.11-3.14 or update create_venv.bat path.
                 pause
                 exit /b 1
             ) else (
@@ -114,7 +114,7 @@ pip install --only-binary=pyarrow --only-binary=duckdb -r requirements.txt
 if errorlevel 1 (
     echo [ERROR] Failed to install dependencies.
     echo [HINT] If the error mentions pyarrow or duckdb, no precompiled wheel is available
-    echo [HINT] for this Python version. Use Python 3.11 or 3.12, or check pypi.org for
+    echo [HINT] for this Python version. Use Python 3.11-3.14, or check pypi.org for
     echo [HINT] wheel availability before retrying.
     pause
     exit /b 1
