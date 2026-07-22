@@ -22,7 +22,7 @@ L'installation (étape 1) n'est donc à refaire que si vous changez de poste ou 
 - Python 3.11 à 3.14 (plage officiellement testée) — installer de préférence la dernière version disponible
 - Fichiers SIRENE au format Parquet disponibles en local
 
-### Utiliser un terminal (si vous n'en avez jamais ouvert)
+### Utiliser un terminal (pour dépannage ou utilisation avancée)
 
 Les scripts d'installation et de lancement peuvent s'utiliser en double-cliquant dessus, sans jamais ouvrir de terminal. Mais si un script affiche une erreur, il faut pouvoir l'exécuter "à la main" pour lire le message :
 
