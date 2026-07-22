@@ -317,7 +317,8 @@ def parse_args() -> argparse.Namespace:
 
 def run_export(enable_zip_export: bool, include_extra_items: bool) -> None:
     """Main routine."""
-    project_dir = Path(__file__).resolve().parent
+    # This script lives in scripts/; the project root is one level up.
+    project_dir = Path(__file__).resolve().parent.parent
     export_root = project_dir / "export"
     export_root.mkdir(parents=True, exist_ok=True)
 

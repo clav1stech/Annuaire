@@ -6,3 +6,11 @@ __pycache__/
 venv/
 *.log
 .DS_Store
+
+# Outils / caches de dev
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Sorties du script d'export (scripts/export_project.py)
+export/

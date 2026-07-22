@@ -557,7 +557,6 @@ def build_statistics_sheet(
     status_radiated_count = int(status_masks["radiated"].sum())
     status_active_count = int(status_masks["active"].sum())
 
-    closed_with_replacement_count = int((status_masks["closed"] & replacement.ne("")).sum())
     closed_without_replacement_count = int((status_masks["closed"] & replacement.eq("")).sum())
     closed_with_succession_count = int(
         (status_masks["closed"] & synthese.eq("succession")).sum()

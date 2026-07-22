@@ -9,9 +9,6 @@ from typing import Iterable
 import duckdb
 import pandas as pd
 
-# Regex used to strip legal-form abbreviations before fuzzy name comparison.
-_LEGAL_FORM_RE = r"\b(SAS|SARL|SA|SNC|EURL|SASU|SCI|GIE|EI)\b"
-
 from .sirene_schema import (
     ETABLISSEMENT_COLUMN_ALIASES,
     HISTORIQUE_COLUMN_ALIASES,
@@ -21,6 +18,9 @@ from .sirene_schema import (
     resolve_column_map,
     sql_identifier,
 )
+
+# Regex used to strip legal-form abbreviations before fuzzy name comparison.
+_LEGAL_FORM_RE = r"\b(SAS|SARL|SA|SNC|EURL|SASU|SCI|GIE|EI)\b"
 
 
 @dataclass

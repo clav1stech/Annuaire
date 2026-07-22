@@ -144,19 +144,24 @@ Définition métier:
 - La qualité des résultats dépend de la complétude des colonnes présentes dans les millésimes fournis.
 - L’application reste 100 % locale et ne dépend d’aucune base externe.
 
-## Export project snapshot (backup + AI handoff)
+## Export du projet (sauvegarde + transmission à une IA)
 
-Script available at project root: export_project.py.
+Script disponible dans `scripts/export_project.py`.
 
-What it exports:
-- .py, .bat, .md, .txt
-- excludes .parquet, virtual env folders, caches, export/, requirements.txt
+Ce qu'il exporte :
+- fichiers `.py`, `.bat`, `.sh`, `.md`, `.txt`,
+- exclut les `.parquet`, environnements virtuels, caches, le dossier `export/` et `requirements.txt`.
 
-Output location:
-- export/export_<project>_<timestamp>_vX.Y.Z/
-- includes copied files, manifest.txt, and one AI-ready context file with all code/content
-- also creates a .zip archive of the snapshot folder
+Emplacement de sortie :
+- `export/export_<projet>_<horodatage>_vX.Y.Z/`,
+- contient les fichiers copiés, un `manifest.txt` et un fichier de contexte prêt pour l'IA (tout le code/contenu regroupé).
 
-Run from VS Code Play / Run and Debug:
-- select configuration Python: Export Project Snapshot
-- click Play
+Lancement depuis la racine du projet :
+
+```bash
+python scripts/export_project.py
+```
+
+Options utiles :
+- `--enable-zip-export true` pour générer aussi une archive `.zip` du dossier snapshot,
+- `--include-extra-items true` pour archiver en plus les éléments lourds (environnements virtuels, etc.).
