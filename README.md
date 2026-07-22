@@ -197,12 +197,6 @@ Définition métier:
 - `Fermé` = l'établissement du SIRET est fermé, mais au moins un autre établissement du même SIREN est actif.
 - `Radiée` = la société (SIREN) n'a plus aucun établissement actif.
 
-## Limites connues
-
-- La détection de remplacement/succession est fiable quand elle s'appuie sur le fichier officiel `stocketablissementlienssuccession` (donnée SIRENE officielle, pas une déduction de l'application). Elle est en revanche approximative en son absence, ou pour la détection de déménagement au sens large (basée sur l'historique d'adresses, sans lien officiel équivalent) — voir le détail plus haut dans "Fichiers SIRENE attendus".
-- La qualité des résultats dépend de la complétude des colonnes présentes dans les millésimes fournis.
-- L’application reste 100 % locale et ne dépend d’aucune base externe.
-
 ## Export du projet (sauvegarde + transmission à une IA)
 
 Script disponible dans `scripts/export_project.py`.
