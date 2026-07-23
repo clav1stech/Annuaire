@@ -17,6 +17,7 @@ from .config import (
     BYTES_PER_MO,
     DATA_STATUS_ABSENT,
     DATA_STATUS_OUTDATED,
+    DATA_STATUS_UNKNOWN,
     DATA_STATUS_UP_TO_DATE,
     PROJECT_ROOT,
     SIRENE_CATEGORY_DEFAULT_FILENAMES,
@@ -178,6 +179,27 @@ def record_download(
     return entry
 
 
+def _manual_file_detail(local_path: str, remote_filesize: int | None) -> str:
+    """Message pour un fichier sans entrée de manifeste, avec indice de taille si possible.
+
+    La taille sur disque est une métadonnée du système de fichiers (``Path.stat``), pas une
+    lecture du contenu Parquet : elle reste couverte par ce qui est autorisé sur ces fichiers.
+    Une taille identique n'est qu'un indice (deux millésimes peuvent coïncider par hasard) ;
+    une taille différente est en revanche un signal fiable que ce n'est pas la publication
+    courante.
+    """
+    try:
+        local_size = Path(local_path).stat().st_size
+    except OSError:
+        local_size = None
+
+    if local_size is None or remote_filesize is None:
+        return "fichier installé manuellement, fraîcheur non vérifiable"
+    if local_size == remote_filesize:
+        return "fichier installé manuellement, taille identique à la publication actuelle (indice, pas une confirmation)"
+    return "fichier installé manuellement, taille différente de la publication actuelle : probablement un autre millésime"
+
+
 def _compare_category(
     category: str,
     resource: RemoteResource,
@@ -190,15 +212,15 @@ def _compare_category(
     tracked_exists = bool(tracked_path) and Path(str(tracked_path)).exists()
 
     if entry is None or not tracked_exists:
-        # Un fichier déposé à la main est bien présent mais de version inconnue : le
-        # signaler comme obsolète plutôt qu'absent évite d'annoncer à tort un fichier
-        # manquant à un utilisateur qui l'a déjà installé.
+        # Un fichier déposé à la main est bien présent, mais sans entrée de manifeste :
+        # sa fraîcheur n'est pas connue, ce qui diffère de « connu comme périmé ». Le
+        # signaler comme absent serait tout aussi trompeur pour qui l'a déjà installé.
         if existing_local_path:
             return CategoryFreshness(
                 category=category,
-                status=DATA_STATUS_OUTDATED,
+                status=DATA_STATUS_UNKNOWN,
                 label=label,
-                detail="fichier local présent, version inconnue",
+                detail=_manual_file_detail(existing_local_path, resource.filesize),
                 local_path=existing_local_path,
                 remote_size_mo=size_mo,
                 remote_last_modified=resource.last_modified,

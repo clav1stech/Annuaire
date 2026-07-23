@@ -90,6 +90,10 @@ SIRENE_MANIFEST_VERSION = 1
 DATA_STATUS_ABSENT = "absent"
 DATA_STATUS_UP_TO_DATE = "à jour"
 DATA_STATUS_OUTDATED = "obsolète"
+# Fichier local présent mais jamais téléchargé par l'application (aucune entrée de
+# manifeste) : sa fraîcheur ne peut pas être établie, ce qui diffère d'un fichier connu
+# comme périmé.
+DATA_STATUS_UNKNOWN = "version inconnue"
 
 DATA_FRESHNESS_CACHE_TTL_SECONDS = 3600
 

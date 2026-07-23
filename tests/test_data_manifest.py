@@ -13,6 +13,7 @@ import pytest
 from src.config import (
     DATA_STATUS_ABSENT,
     DATA_STATUS_OUTDATED,
+    DATA_STATUS_UNKNOWN,
     DATA_STATUS_UP_TO_DATE,
     SIRENE_MANIFEST_FILENAME,
 )
@@ -329,8 +330,8 @@ class TestFreshnessComparison:
         )
         assert status.categories[0].status == DATA_STATUS_ABSENT
 
-    def test_manually_installed_file_is_outdated_not_absent(self):
-        """Un fichier déposé à la main existe : sa version est inconnue, pas le fichier."""
+    def test_manually_installed_file_is_unknown_not_absent(self):
+        """Un fichier déposé à la main existe : sa fraîcheur est inconnue, pas le fichier."""
         status = build_freshness_status(
             {"stocketablissement": _remote("stocketablissement")},
             {},
@@ -338,8 +339,45 @@ class TestFreshnessComparison:
             categories=("stocketablissement",),
         )
         verdict = status.categories[0]
-        assert verdict.status == DATA_STATUS_OUTDATED
+        assert verdict.status == DATA_STATUS_UNKNOWN
         assert verdict.local_path == "StockEtablissement_utf8.parquet"
+        assert verdict.needs_download is True
+
+    def test_manual_file_size_matching_remote_is_a_hint_not_a_confirmation(self, tmp_path):
+        local_file = tmp_path / "StockEtablissement_utf8.parquet"
+        local_file.write_bytes(b"x" * 1_048_576)
+        status = build_freshness_status(
+            {"stocketablissement": _remote("stocketablissement")},
+            {},
+            existing_local_paths={"stocketablissement": str(local_file)},
+            categories=("stocketablissement",),
+        )
+        verdict = status.categories[0]
+        assert verdict.status == DATA_STATUS_UNKNOWN
+        assert "taille identique" in verdict.detail
+        assert "pas une confirmation" in verdict.detail
+
+    def test_manual_file_size_mismatch_is_a_stronger_signal(self, tmp_path):
+        local_file = tmp_path / "StockEtablissement_utf8.parquet"
+        local_file.write_bytes(b"x" * 42)
+        status = build_freshness_status(
+            {"stocketablissement": _remote("stocketablissement")},
+            {},
+            existing_local_paths={"stocketablissement": str(local_file)},
+            categories=("stocketablissement",),
+        )
+        verdict = status.categories[0]
+        assert verdict.status == DATA_STATUS_UNKNOWN
+        assert "différente" in verdict.detail
+
+    def test_manual_file_that_does_not_exist_on_disk_has_no_size_hint(self):
+        status = build_freshness_status(
+            {"stocketablissement": _remote("stocketablissement")},
+            {},
+            existing_local_paths={"stocketablissement": "chemin/introuvable.parquet"},
+            categories=("stocketablissement",),
+        )
+        assert status.categories[0].detail == "fichier installé manuellement, fraîcheur non vérifiable"
 
     def test_latest_publication_is_the_most_recent(self):
         status = build_freshness_status(

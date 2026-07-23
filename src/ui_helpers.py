@@ -8,15 +8,23 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from .config import DATA_STATUS_ABSENT, DATA_STATUS_OUTDATED, DATA_STATUS_UP_TO_DATE
+from .config import (
+    DATA_STATUS_ABSENT,
+    DATA_STATUS_OUTDATED,
+    DATA_STATUS_UNKNOWN,
+    DATA_STATUS_UP_TO_DATE,
+)
 from .data_manifest import DataFreshnessStatus, format_publication_date, format_size_mo
 
 # Pastille et couleur par statut. Le vert n'est jamais utilisé pour un fichier à
 # télécharger : la couleur doit dire au premier coup d'œil s'il reste une action à faire.
+# "version inconnue" (fichier installé à la main) reste neutre en bleu : ni une alerte
+# (orange/rouge, qui affirmerait à tort une version périmée) ni un feu vert.
 _DATA_STATUS_BADGES = {
     DATA_STATUS_UP_TO_DATE: ("✅", "green"),
     DATA_STATUS_OUTDATED: ("🔄", "orange"),
     DATA_STATUS_ABSENT: ("⬇️", "red"),
+    DATA_STATUS_UNKNOWN: ("❔", "blue"),
 }
 
 
