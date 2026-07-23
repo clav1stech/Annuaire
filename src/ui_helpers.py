@@ -8,6 +8,17 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from .config import DATA_STATUS_ABSENT, DATA_STATUS_OUTDATED, DATA_STATUS_UP_TO_DATE
+from .data_manifest import DataFreshnessStatus, format_publication_date, format_size_mo
+
+# Pastille et couleur par statut. Le vert n'est jamais utilisé pour un fichier à
+# télécharger : la couleur doit dire au premier coup d'œil s'il reste une action à faire.
+_DATA_STATUS_BADGES = {
+    DATA_STATUS_UP_TO_DATE: ("✅", "green"),
+    DATA_STATUS_OUTDATED: ("🔄", "orange"),
+    DATA_STATUS_ABSENT: ("⬇️", "red"),
+}
+
 
 def step_header(step_number: int, title: str) -> None:
     """Render a compact step header."""
@@ -112,6 +123,51 @@ def render_progress_metrics(
     c4.metric("Échecs",      failed,           delta=pct_failed,   delta_color="inverse")
     if candidates_found > 0:
         c5.metric("Candidats", candidates_found, delta=avg_cands, delta_color="off")
+
+
+def render_sirene_data_panel(status: DataFreshnessStatus) -> bool:
+    """Render the SIRENE data freshness card. Return True when the update button is clicked."""
+    with st.container(border=True):
+        header_col, date_col = st.columns([3, 2], vertical_alignment="center")
+        header_col.markdown("**Données SIRENE**")
+
+        if not status.check_ok:
+            date_col.markdown(":gray[vérification impossible]")
+            st.caption(
+                f"{status.error} Les fichiers déjà présents restent utilisables : "
+                "leur fraîcheur n'a simplement pas pu être contrôlée."
+            )
+            return False
+
+        date_col.markdown(
+            f":gray[Publication data.gouv.fr : {format_publication_date(status.latest_publication)}]"
+        )
+
+        for item in status.categories:
+            icon, color = _DATA_STATUS_BADGES.get(item.status, ("•", "gray"))
+            icon_col, name_col, size_col, status_col = st.columns(
+                [0.4, 4, 1.4, 3], vertical_alignment="center"
+            )
+            icon_col.markdown(icon)
+            name_col.markdown(item.label)
+            size_col.markdown(f":gray[{format_size_mo(item.remote_size_mo)}]")
+            status_col.markdown(f":{color}[{item.status}]")
+
+        if status.up_to_date:
+            st.caption("Tous les fichiers correspondent à la dernière publication.")
+            return False
+
+        st.caption(
+            f"{len(status.stale)} fichier(s) à récupérer, "
+            f"{format_size_mo(status.total_download_mo)} au total. "
+            "Le téléchargement peut durer plusieurs minutes ; les fichiers déjà à jour "
+            "sont ignorés."
+        )
+        return st.button(
+            f"Mettre à jour les données SIRENE ({format_size_mo(status.total_download_mo)})",
+            type="primary",
+            width="stretch",
+        )
 
 
 def render_download_metrics(

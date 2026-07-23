@@ -21,12 +21,7 @@ from src.config import (
     SIRENE_CATEGORY_LABELS,
     build_default_output_path,
 )
-from src.data_manifest import (
-    download_category,
-    format_publication_date,
-    format_size_mo,
-    get_data_freshness_status,
-)
+from src.data_manifest import download_category, get_data_freshness_status
 from src.datagouv_client import DataGouvError, fetch_remote_resources
 from src.download_utils import DownloadError
 from src.export_utils import build_export_sheets, save_excel_file, to_excel_bytes
@@ -47,6 +42,7 @@ from src.ui_helpers import (
     default_output_filename,
     render_download_metrics,
     render_progress_metrics,
+    render_sirene_data_panel,
     show_dataframe_preview,
     show_metrics,
     show_warnings,
@@ -200,28 +196,7 @@ def _render_sirene_data_status(detected_paths: dict[str, str]) -> None:
             st.error(f"Téléchargement échoué — {message}")
 
     status = _cached_data_freshness(detected_paths)
-    if not status.check_ok:
-        st.caption(f"Fraîcheur des données SIRENE non vérifiée : {status.error}")
-        return
-
-    if status.up_to_date:
-        st.caption(
-            "Données SIRENE à jour (publication data.gouv.fr du "
-            f"{format_publication_date(status.latest_publication)})."
-        )
-        return
-
-    details = "\n".join(
-        f"- **{item.label}** — {item.status}"
-        + (f" ({item.detail})" if item.detail else "")
-        + f", {format_size_mo(item.remote_size_mo)} à télécharger"
-        for item in status.stale
-    )
-    st.warning(
-        f"{len(status.stale)} fichier(s) SIRENE à télécharger "
-        f"({format_size_mo(status.total_download_mo)} au total) :\n{details}"
-    )
-    if st.button("Mettre à jour les données SIRENE", type="primary"):
+    if render_sirene_data_panel(status):
         _download_sirene_data([item.category for item in status.stale])
 
 
@@ -434,13 +409,17 @@ def main() -> None:
     if missing_required:
         st.error(
             "Fichier(s) Parquet SIRENE obligatoire(s) introuvable(s) à la racine du dossier du "
-            f"projet : {', '.join(missing_required)}. Chargez un fichier utilisateur puis "
-            "utilisez le bouton « Mettre à jour les données SIRENE » de l'étape 4 pour les "
-            "télécharger automatiquement, ou renseignez le chemin manuellement à cette même "
-            "étape (voir la section 'Fichiers SIRENE attendus' du README)."
+            f"projet : {', '.join(missing_required)}. Utilisez le bouton « Mettre à jour les "
+            "données SIRENE » ci-dessous pour les télécharger, ou renseignez le chemin "
+            "manuellement à l'étape 4 (voir la section 'Fichiers SIRENE attendus' du README)."
         )
     for warning_message in detected.warnings:
         st.warning(warning_message)
+
+    # Le téléchargement des données doit rester accessible sans avoir chargé de fichier
+    # utilisateur : c'est justement l'état d'un poste neuf, où aucune autre étape n'est
+    # franchissable tant que les Parquet manquent.
+    _render_sirene_data_status(dict(detected.paths))
 
     if "output_path_locked" not in st.session_state:
         st.session_state["output_path_locked"] = False
@@ -561,7 +540,6 @@ def main() -> None:
         )
 
     step_header(4, "Renseigner les fichiers SIRENE Parquet")
-    _render_sirene_data_status(dict(detected.paths))
     etab_default = detected.paths.get("stocketablissement", DEFAULT_STOCKETABLISSEMENT_PATH)
     ul_default = detected.paths.get("stockunitelegale", DEFAULT_STOCKUNITELEGALE_PATH)
     succession_default = detected.paths.get("stocketablissementlienssuccession", DEFAULT_SUCCESSION_PATH)

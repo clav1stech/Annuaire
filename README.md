@@ -13,7 +13,7 @@ Toutes les étapes, dans l'ordre, avec leur fréquence et un lien direct vers la
 | 1 | Installer Python | Une fois | [Installer Python](#installer-python-si-nécessaire) |
 | 2 | Télécharger le projet et le décompresser | Une fois | [Installation](#installation-une-seule-fois) |
 | 3 | Lancer le script d'installation (`create_venv`) | Une fois | [Installation](#installation-une-seule-fois) |
-| 4 | Télécharger les fichiers SIRENE (Parquet) — bouton **« Mettre à jour les données SIRENE »** à l'étape 4 de l'interface | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
+| 4 | Télécharger les fichiers SIRENE (Parquet) — bouton **« Mettre à jour les données SIRENE »** en haut de l'interface | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
 | 5 | *(uniquement en téléchargement manuel)* **Placer ces fichiers Parquet dans le dossier du projet** | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
 | 6 | Lancer l'application (`run_app`) | À chaque usage | [Lancement](#lancement-à-chaque-usage) |
 | 7 | Charger son fichier et exécuter le contrôle | À chaque usage | [Exemple d'usage](#exemple-dusage) |
@@ -173,7 +173,7 @@ Si `requirements.txt` a changé dans la mise à jour (nouvelle dépendance ou ve
 
 ### Téléchargement automatique depuis l'application (recommandé)
 
-À l'étape 4 de l'interface, l'application interroge data.gouv.fr et compare la version publiée aux fichiers présents sur votre poste :
+Dès l'ouverture de la page, avant même de charger un fichier à contrôler, l'application interroge data.gouv.fr et compare la version publiée aux fichiers présents sur votre poste :
 
 - si tout est à jour, une simple ligne d'information indique la date de publication des données utilisées ;
 - sinon, un bandeau liste les fichiers concernés (absents ou périmés) avec le volume à télécharger, et un bouton **« Mettre à jour les données SIRENE »** les récupère l'un après l'autre, avec barre de progression et volume en Mo.
