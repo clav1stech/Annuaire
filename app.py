@@ -108,6 +108,8 @@ def _render_version_status() -> None:
             f"Nouvelle version disponible : {status.local_version} → {status.remote_version}."
         )
         _render_update_action()
+    elif status.ahead_of_remote:
+        st.caption(f"Version {status.local_version} (dev).")
     elif status.check_ok:
         st.caption(f"Version {status.local_version} (à jour).")
     else:

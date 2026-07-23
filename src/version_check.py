@@ -61,6 +61,17 @@ class VersionStatus:
             self.local_version
         )
 
+    @property
+    def ahead_of_remote(self) -> bool:
+        """Version locale en avance sur `main` : branche de développement, pas une version diffusée.
+
+        Distinguer ce cas de « à jour » évite de laisser croire que le code exécuté est
+        celui publié, alors qu'il n'a pas encore été fusionné.
+        """
+        return self.remote_version is not None and parse_version(self.local_version) > parse_version(
+            self.remote_version
+        )
+
 
 def get_version_status() -> VersionStatus:
     local_version = read_local_version()
