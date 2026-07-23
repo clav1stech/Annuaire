@@ -6,8 +6,10 @@ __pycache__/
 venv/
 *.log
 .DS_Store
+*.parquet
 
 # Outils / caches de dev
+*.egg-info/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/

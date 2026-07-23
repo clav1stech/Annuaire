@@ -8,6 +8,7 @@ import unicodedata
 from dataclasses import dataclass, field
 from io import BytesIO
 from pathlib import Path
+from typing import Literal, overload
 
 import pandas as pd
 
@@ -203,6 +204,24 @@ def read_user_input_file(
 def normalize_path_text(path_text: str) -> str:
     """Normalize user-entered path text."""
     return path_text.strip().strip('"').strip("'")
+
+
+# Une source obligatoire ne peut pas etre absente : le chemin manquant leve, la valeur de
+# retour n'est donc jamais None. Les surcharges evitent aux appelants d'avoir a s'en assurer.
+@overload
+def resolve_parquet_source(
+    path_text: str, label: str, required: Literal[True] = ...
+) -> str: ...
+
+
+@overload
+def resolve_parquet_source(
+    path_text: str, label: str, required: Literal[False]
+) -> str | None: ...
+
+
+@overload
+def resolve_parquet_source(path_text: str, label: str, required: bool) -> str | None: ...
 
 
 def resolve_parquet_source(path_text: str, label: str, required: bool = True) -> str | None:

@@ -11,6 +11,7 @@
 ## Checklist
 - [ ] `pytest -q` passe en local
 - [ ] `ruff check .` ne remonte rien
+- [ ] `mypy` ne remonte rien
 - [ ] `VERSION` et `CHANGELOG.md` mis à jour si comportement visible modifié (via `scripts/update_changelog.py`)
 - [ ] `docs/CODEMAP.md` mis à jour si la structure du code a changé
 - [ ] Encodage UTF-8 vérifié (accents FR corrects dans UI / Excel / docs)

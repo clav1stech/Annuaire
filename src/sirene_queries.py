@@ -202,6 +202,9 @@ class SireneQueryService:
                         ON CAST(p.{sql_identifier(predecessor_col)} AS VARCHAR) = i_pred.siret_key
                 """
             else:
+                # Le garde-fou en amont ecarte le cas ou aucune des deux colonnes n'est
+                # resolue : arriver ici implique donc une colonne successeur presente.
+                assert successor_col is not None
                 query = f"""
                     SELECT
                         {select_clause},
@@ -254,6 +257,9 @@ class SireneQueryService:
                 self.con.unregister("tmp_hist_sirets")
             return df, resolved_map, available_columns
 
+        # Symetrique du garde-fou plus haut : sans colonne SIRET exploitable, la colonne
+        # SIREN est forcement resolue puisque l'absence des deux a deja fait retourner.
+        assert siren_col is not None
         self.con.register("tmp_hist_sirens", pd.DataFrame({"siren_key": input_sirens}))
         try:
             query = f"""

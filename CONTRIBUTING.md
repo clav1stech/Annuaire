@@ -8,7 +8,7 @@ vivent dans [docs/CLAUDE.md](docs/CLAUDE.md) et [docs/CONVENTIONS.md](docs/CONVE
 
 ```bash
 ./create_venv.command     # macOS / Linux (create_venv.bat sous Windows)
-pip install -e ".[dev]"   # dépendances de développement (pytest, ruff)
+pip install -e ".[dev]"   # dépendances de développement (pytest, ruff, mypy)
 ```
 
 ## Se repérer dans le code
@@ -29,11 +29,12 @@ io_utils / sirene_queries (accès données)
 
 ```bash
 ruff check .   # lint
+mypy           # typage statique (périmètre : src/ + app.py)
 pytest -q      # tests
 ```
 
 La CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) rejoue lint + tests
-sur Python 3.11 et 3.12.
+sur Python 3.11, 3.12, 3.13 et 3.14, et le typage statique sur une seule version.
 
 ## Versionnage & changelog
 

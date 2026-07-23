@@ -41,6 +41,7 @@ from src.ui_helpers import (
     show_warnings,
     step_header,
 )
+from src.updater import apply_update
 from src.version_check import get_version_status
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -48,14 +49,58 @@ def _cached_version_status():
     return get_version_status()
 
 
+def _render_update_action() -> None:
+    """Bouton de mise à jour et compte rendu de la tentative précédente.
+
+    Le résultat transite par la session plutôt que par une variable locale : la mise à jour
+    réécrit les fichiers de l'application, donc le rerun qui suit repart d'un code différent
+    de celui qui a déclenché l'action.
+    """
+    outcome = st.session_state.get("update_outcome")
+
+    if outcome is None:
+        st.caption(
+            "La mise à jour ne remplace que le code du projet : fichiers Parquet SIRENE, "
+            "dossier d'export et environnement virtuel sont préservés."
+        )
+        if st.button("Mettre à jour maintenant", type="primary"):
+            with st.spinner("Mise à jour en cours..."):
+                st.session_state["update_outcome"] = apply_update()
+            _cached_version_status.clear()
+            st.rerun()
+        return
+
+    for message in outcome.messages:
+        st.caption(message)
+
+    if not outcome.applied:
+        st.error(f"Mise à jour non appliquée : {outcome.error}")
+        if outcome.hint:
+            st.info(outcome.hint)
+        if st.button("Réessayer"):
+            del st.session_state["update_outcome"]
+            st.rerun()
+        return
+
+    st.success("Mise à jour appliquée.")
+    if outcome.hint:
+        st.info(outcome.hint)
+    if outcome.requirements_changed:
+        st.warning(
+            "Les dépendances ont changé : fermer cette application, relancer `create_venv` "
+            "(.bat/.command), puis `run_app`."
+        )
+    else:
+        st.warning("Fermer cette application et relancer `run_app` (.bat/.command) pour charger la nouvelle version.")
+
+
 def _render_version_status() -> None:
     status = _cached_version_status()
     if status.update_available:
         st.warning(
-            f"Nouvelle version disponible : {status.local_version} → {status.remote_version}. "
-            "Lancez `update_project` (.command/.bat) pour mettre à jour, ou retéléchargez le zip "
-            "depuis GitHub."
+            f"Nouvelle version disponible : {status.local_version} → {status.remote_version}."
         )
+        _render_update_action()
     elif status.check_ok:
         st.caption(f"Version {status.local_version} (à jour).")
     else:
@@ -550,13 +595,16 @@ def main() -> None:
         progress_bar = st.progress(0, text="Initialisation...")
         progress_metrics_placeholder = st.empty()
         total_rows = len(processing_df)
-        callback_state = {
-            "last_emit": 0.0,
+        callback_state: dict[str, int] = {
             "percent": 0,
             "processed": 0,
             "success": 0,
             "failed": 0,
         }
+        # Horodatage tenu a l'ecart des compteurs : monotonic() renvoie un flottant, et le
+        # melanger a des entiers propagerait ce type a des valeurs (pourcentage, comptages)
+        # que la barre de progression et les metriques attendent entieres.
+        last_emit_state = {"at": 0.0}
 
         def update_progress(
             percent: int,
@@ -578,12 +626,12 @@ def main() -> None:
             failed = max(0, processed - success)
 
             should_emit = force or (percent >= callback_state["percent"] + 1) or (
-                now - callback_state["last_emit"]
+                now - last_emit_state["at"]
             ) >= 2.0
             if not should_emit:
                 return
 
-            callback_state["last_emit"] = now
+            last_emit_state["at"] = now
             callback_state["percent"] = percent
             callback_state["processed"] = processed
             callback_state["success"] = success

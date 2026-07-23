@@ -8,45 +8,42 @@ echo [INFO] Working directory: %CD%
 echo [INFO] Detecting installed Python version...
 set "PYTHON_EXE="
 set "PYTHON_ARGS="
+set "PY_VERSION="
 
-where py >nul 2>&1
-if not errorlevel 1 (
-    set "PYTHON_EXE=py"
-    set "PYTHON_ARGS=-3"
-) else (
-    where python >nul 2>&1
-    if not errorlevel 1 (
-        set "PYTHON_EXE=python"
-    )
-)
+REM `py` et `python` presents sur le PATH sont souvent les raccourcis Microsoft Store :
+REM ils affichent un message d'aide, ne lancent aucun interpreteur, et sortent malgre
+REM tout en code 0. Ni `where` ni `errorlevel` ne permettent de les ecarter : chaque
+REM candidat doit etre reellement execute avant d'etre retenu (cf. :try_python).
+call :try_python "py" "-3"
+call :try_python "python" ""
 
-if not defined PYTHON_EXE (
-    echo [INFO] Python introuvable sur le PATH, recherche dans les emplacements Anaconda/Miniconda courants...
-    for %%D in (
-        "%USERPROFILE%\Anaconda3"
-        "%USERPROFILE%\anaconda3"
-        "%USERPROFILE%\Miniconda3"
-        "%USERPROFILE%\miniconda3"
-        "C:\ProgramData\Anaconda3"
-        "C:\ProgramData\Miniconda3"
-        "C:\Users\Public\Anaconda3"
-        "C:\Users\Public\Miniconda3"
-    ) do (
-        if not defined PYTHON_EXE if exist "%%~D\python.exe" (
-            set "PYTHON_EXE=%%~D\python.exe"
-        )
-    )
-)
+for %%D in (
+    "%USERPROFILE%\Anaconda3"
+    "%USERPROFILE%\anaconda3"
+    "%USERPROFILE%\Miniconda3"
+    "%USERPROFILE%\miniconda3"
+    "%LOCALAPPDATA%\anaconda3"
+    "%LOCALAPPDATA%\miniconda3"
+    "C:\ProgramData\Anaconda3"
+    "C:\ProgramData\Miniconda3"
+    "C:\ProgramData\anaconda3"
+    "C:\ProgramData\miniconda3"
+    "C:\Users\Public\Anaconda3"
+    "C:\Users\Public\Miniconda3"
+) do call :try_python "%%~D\python.exe" ""
+
+for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python3*") do call :try_python "%%~D\python.exe" ""
 
 if not defined PYTHON_EXE (
-    echo [ERROR] No Python interpreter found.
+    echo [ERROR] No working Python interpreter found.
     echo [HINT] Install Python 3.11-3.14, or make sure your existing installation
     echo [HINT] ^(Anaconda/Miniconda included^) has its python.exe reachable from the PATH.
+    echo [HINT] Un "python" du PATH qui affiche "Python est introuvable" est un raccourci
+    echo [HINT] Microsoft Store : le desactiver dans Parametres ^> Applications ^> Alias
+    echo [HINT] d'execution d'application, ou ajouter le vrai Python au PATH.
     pause
     exit /b 1
 )
-
-for /f "tokens=2" %%V in ('"!PYTHON_EXE!" !PYTHON_ARGS! --version 2^>^&1') do set "PY_VERSION=%%V"
 
 if defined PY_VERSION (
     echo [INFO] Detected Python version: !PY_VERSION! ^(!PYTHON_EXE! !PYTHON_ARGS!^)
@@ -127,3 +124,22 @@ if errorlevel 1 (
 
 echo [SUCCESS] Environment is ready.
 endlocal
+exit /b 0
+
+REM Retient le candidat %1 (arguments %2) uniquement si son `--version` renvoie un vrai
+REM numero de version 3.x. Les raccourcis Microsoft Store repondent par un message d'aide
+REM ("Python est introuvable ...") : c'est le seul critere qui les distingue, leur code de
+REM sortie valant 0 comme celui d'un interpreteur reel.
+:try_python
+if defined PYTHON_EXE goto :eof
+set "CAND_EXE=%~1"
+set "CAND_ARGS=%~2"
+set "CAND_OUT="
+if "%CAND_EXE:~1,1%"==":" if not exist "%CAND_EXE%" goto :eof
+for /f "tokens=2" %%V in ('"%CAND_EXE%" %CAND_ARGS% --version 2^>^&1') do if not defined CAND_OUT set "CAND_OUT=%%V"
+if not defined CAND_OUT goto :eof
+if not "!CAND_OUT:~0,2!"=="3." goto :eof
+set "PYTHON_EXE=%CAND_EXE%"
+set "PYTHON_ARGS=%CAND_ARGS%"
+set "PY_VERSION=%CAND_OUT%"
+goto :eof

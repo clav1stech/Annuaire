@@ -9,7 +9,7 @@
 - `AGENTS.md` — point d'entrée IA, renvoie vers `docs/CLAUDE.md`.
 - `LICENSE` — notice de propriété interne (logiciel non open source).
 - `CONTRIBUTING.md` — flux de contribution (résumé, renvoie vers `docs/`).
-- `pyproject.toml` — métadonnées du package, dépendances (dont `[dev]`), config `pytest`/`ruff`.
+- `pyproject.toml` — métadonnées du package, dépendances (dont `[dev]`), config `pytest`/`ruff`/`mypy`.
 - `requirements.txt` — dépendances Python (utilisé par les scripts d'installation).
 - `create_venv.command` / `run_app.command` — installation et lancement (macOS / Linux ; extension `.command` pour ouverture directe dans Terminal.app au double-clic).
 - `create_venv.bat` / `run_app.bat` — installation et lancement (Windows).
@@ -18,7 +18,7 @@
 - Tests `pytest` des fonctions pures (validation SIRET/SIREN, statut, nommage des sorties). Socle de non-régression.
 
 ## .github/
-- `workflows/ci.yml` — CI (lint `ruff` + `pytest` sur Python 3.11/3.12).
+- `workflows/ci.yml` — CI (lint `ruff` + `pytest` sur Python 3.11 à 3.14, typage `mypy` sur une version).
 - `pull_request_template.md` — gabarit de PR (checklist versionnage/UTF-8/Parquet).
 
 ## dormant/
@@ -28,7 +28,11 @@
 
 ## scripts/
 - `update_changelog.py` — insertion idempotente d'entrées dans `CHANGELOG.md`.
-- `export_project.py` — outil d'export du projet (profils IA / sauvegarde), voir § Export dans `docs/CLAUDE.md`.
+- `update_project.py` — CLI de mise à jour : compare les versions puis délègue l'application à `src/updater.py`.
+- `export_project.py` — outil d'export du projet, voir § Export dans `docs/CLAUDE.md`. Trois profils exclusifs :
+  `--ai` (défaut : code + doc structurante + manifeste), `--outline` (carte d'architecture sans corps de fonctions),
+  `--backup` (zip restaurable avec rotation). Portée réductible via `--only chemins` ou `--preset <sous-module>`
+  (`--list-presets` pour la liste). Sorties dans `export/`, gitignoré.
 
 ## src/ (package `Annuaire_SIRENE`)
 - `__init__.py` — expose `APP_NAME`, `__version__`.
@@ -40,10 +44,13 @@
 - `io_utils.py` — lecture des fichiers utilisateur et détection des sources parquet locales.
 - `export_utils.py` — génération du rapport Excel (feuilles, mise en forme).
 - `ui_helpers.py` — fonctions d'aide au rendu Streamlit.
+- `version_check.py` — comparaison version locale / `VERSION` distant sur GitHub (partagé UI + CLI).
+- `updater.py` — application d'une mise à jour (git ou zip), sans interaction ni sortie standard : renvoie un `UpdateOutcome`. Partagé entre `app.py` (bouton d'UI) et `scripts/update_project.py`.
 
 ## Flux de dépendances (sens unique)
 `io_utils` / `sirene_queries` (accès données) → `pipeline` (métier) → `export_utils` / `ui_helpers` (présentation) → `app.py` (entrypoint).
 `config.py` et `siret_utils.py` / `sirene_schema.py` sont transverses, utilisables par toutes les couches.
+`version_check.py` / `updater.py` sont transverses eux aussi (`updater` dépend de `version_check`, jamais l'inverse).
 
 ## docs/
 - `CLAUDE.md` — règles transverses génériques (tout langage/projet).

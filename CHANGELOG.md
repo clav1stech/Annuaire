@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7 - 2026-07-23
+- UI : bouton « Mettre à jour maintenant » quand une nouvelle version est détectée, sans passer par le terminal
+- Correctif : `create_venv.bat` / `update_project.bat` retenaient l'alias Microsoft Store comme interpréteur Python au lieu d'une installation réelle (Anaconda notamment)
+- Typage statique `mypy` ajouté au lint et à la CI ; matrice CI (3.11 → 3.14) resynchronisée avec la documentation
+
 ## 1.0.6 - 2026-07-22
 - UI: affichage clair du statut de vérification de version (à jour / nouvelle version / échec du check, avec raison)
 

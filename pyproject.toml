@@ -20,6 +20,7 @@ dependencies = [
 dev = [
     "pytest>=8,<9",
     "ruff>=0.6",
+    "mypy>=1.11",
 ]
 
 [tool.setuptools]
@@ -35,3 +36,15 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.mypy]
+# 3.12 et non 3.11 (plancher du projet) : les stubs livres par numpy utilisent la syntaxe
+# `type` de 3.12, que mypy refuse de parser sous une cible plus basse. La compatibilite
+# syntaxique avec 3.11 reste couverte par `target-version = "py311"` de ruff.
+python_version = "3.12"
+files = ["src", "app.py"]
+# streamlit / duckdb / openpyxl ne publient pas de stubs exploitables : sans cette
+# option mypy échouerait sur les imports plutôt que sur le code du projet.
+ignore_missing_imports = true
+warn_unused_configs = true
+warn_redundant_casts = true

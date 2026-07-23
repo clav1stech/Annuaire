@@ -30,3 +30,24 @@ jobs:
 
       - name: Tests (pytest)
         run: pytest -q
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Le typage statique ne dépend pas de la version d'interpréteur : une seule
+      # version suffit, la cible réelle est fixée par `python_version` dans pyproject.
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Typage statique (mypy)
+        run: mypy

@@ -17,7 +17,7 @@ Toutes les étapes, dans l'ordre, avec leur fréquence et un lien direct vers la
 | 5 | **Placer ces fichiers Parquet dans le dossier du projet** | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
 | 6 | Lancer l'application (`run_app`) | À chaque usage | [Lancement](#lancement-à-chaque-usage) |
 | 7 | Charger son fichier et exécuter le contrôle | À chaque usage | [Exemple d'usage](#exemple-dusage) |
-| 8 | Mettre à jour le code si une nouvelle version est signalée (`update_project`) | Occasionnel | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
+| 8 | Mettre à jour le code si une nouvelle version est signalée (bouton dans l'interface, ou `update_project`) | Occasionnel | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
 
 En cas de blocage ou pour savoir ce que l'outil couvre exactement, voir aussi : [FAQ et limites du projet](#faq-et-limites-du-projet).
 
@@ -130,11 +130,19 @@ Le code du projet évolue sur GitHub (corrections, nouvelles fonctionnalités). 
 [HINT] Lancer 'python scripts/update_project.py' pour mettre à jour.
 ```
 
-Sans connexion internet, ou si GitHub est injoignable, la vérification échoue silencieusement (un simple avertissement) et n'empêche jamais l'application de démarrer.
+L'interface Streamlit affiche la même information en haut de page. Sans connexion internet, ou si GitHub est injoignable, la vérification échoue silencieusement (un simple avertissement) et n'empêche jamais l'application de démarrer.
 
-### 2. Appliquer la mise à jour, sans refaire l'installation
+### 2. Appliquer la mise à jour depuis l'interface (le plus simple)
 
-Lancer le script dédié, comme pour l'installation ou le lancement :
+Quand une nouvelle version est détectée, l'application affiche un bouton **« Mettre à jour maintenant »** sous le message d'alerte. Un clic applique la mise à jour, avec les mêmes garanties que le script en ligne de commande (voir ci-dessous) : rien n'est touché du côté des fichiers Parquet SIRENE, du dossier `export/` ni de l'environnement virtuel.
+
+Le compte rendu s'affiche directement dans la page. Comme l'application en cours d'exécution utilise toujours l'ancien code, **il faut la fermer et relancer `run_app`** pour que la nouvelle version soit chargée (et repasser par `create_venv` d'abord si le message signale un changement de dépendances).
+
+Si la mise à jour ne peut pas être appliquée (par exemple des modifications locales non commitées sur un projet cloné avec `git`), la page l'indique avec la marche à suivre, et rien n'est modifié.
+
+### 3. Appliquer la mise à jour en ligne de commande
+
+Alternative à l'interface, notamment si l'application ne démarre plus. Lancer le script dédié, comme pour l'installation ou le lancement :
 
 **Windows :**
 
