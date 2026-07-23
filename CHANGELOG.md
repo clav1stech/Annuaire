@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.0 - 2026-07-23
+- Téléchargement automatique des fichiers Parquet SIRENE depuis data.gouv.fr (détection des versions publiées, manifeste local de version, bouton unique de mise à jour avec barre de progression et volume en Mo) ; tolérance aux deux nomenclatures NAF (rév. 2 et NAF 2025), la nomenclature retenue étant exposée dans le diagnostic de schéma.
+
 ## 1.0.7 - 2026-07-23
 - UI : bouton « Mettre à jour maintenant » quand une nouvelle version est détectée, sans passer par le terminal
 - Correctif : `create_venv.bat` / `update_project.bat` retenaient l'alias Microsoft Store comme interpréteur Python au lieu d'une installation réelle (Anaconda notamment)

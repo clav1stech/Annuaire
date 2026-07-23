@@ -13,8 +13,8 @@ Toutes les étapes, dans l'ordre, avec leur fréquence et un lien direct vers la
 | 1 | Installer Python | Une fois | [Installer Python](#installer-python-si-nécessaire) |
 | 2 | Télécharger le projet et le décompresser | Une fois | [Installation](#installation-une-seule-fois) |
 | 3 | Lancer le script d'installation (`create_venv`) | Une fois | [Installation](#installation-une-seule-fois) |
-| 4 | Télécharger les fichiers SIRENE (Parquet) sur data.gouv.fr | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
-| 5 | **Placer ces fichiers Parquet dans le dossier du projet** | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
+| 4 | Télécharger les fichiers SIRENE (Parquet) — bouton **« Mettre à jour les données SIRENE »** à l'étape 4 de l'interface | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
+| 5 | *(uniquement en téléchargement manuel)* **Placer ces fichiers Parquet dans le dossier du projet** | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
 | 6 | Lancer l'application (`run_app`) | À chaque usage | [Lancement](#lancement-à-chaque-usage) |
 | 7 | Charger son fichier et exécuter le contrôle | À chaque usage | [Exemple d'usage](#exemple-dusage) |
 | 8 | Mettre à jour le code si une nouvelle version est signalée (bouton dans l'interface, ou `update_project`) | Occasionnel | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
@@ -169,7 +169,22 @@ Si `requirements.txt` a changé dans la mise à jour (nouvelle dépendance ou ve
 
 ## Fichiers SIRENE attendus
 
-> **Mise à jour mensuelle recommandée.** La base SIRENE est republiée par l'Insee chaque mois. Pour travailler sur des données à jour, retélécharger les fichiers ci-dessous (mêmes noms, écraser les anciens ou pointer l'application vers le nouveau dossier) environ une fois par mois. Cette opération est un simple téléchargement/remplacement de fichiers : elle ne touche pas au code et ne nécessite pas de relancer l'installation.
+> **Mise à jour mensuelle recommandée.** La base SIRENE est republiée par l'Insee chaque mois. Pour travailler sur des données à jour, récupérer les fichiers ci-dessous environ une fois par mois — le plus simple étant de laisser l'application le faire (voir juste en dessous). Cette opération est un simple téléchargement/remplacement de fichiers : elle ne touche pas au code et ne nécessite pas de relancer l'installation.
+
+### Téléchargement automatique depuis l'application (recommandé)
+
+À l'étape 4 de l'interface, l'application interroge data.gouv.fr et compare la version publiée aux fichiers présents sur votre poste :
+
+- si tout est à jour, une simple ligne d'information indique la date de publication des données utilisées ;
+- sinon, un bandeau liste les fichiers concernés (absents ou périmés) avec le volume à télécharger, et un bouton **« Mettre à jour les données SIRENE »** les récupère l'un après l'autre, avec barre de progression et volume en Mo.
+
+Les fichiers sont enregistrés dans le dossier du projet, sous les noms attendus par la détection automatique — aucun déplacement manuel n'est nécessaire ensuite. Un téléchargement interrompu ne laisse jamais de fichier tronqué à la place du précédent : l'écriture ne remplace l'ancien fichier qu'une fois le transfert terminé, il suffit donc de relancer le bouton.
+
+L'application mémorise la version téléchargée dans un fichier `.sirene_manifest.json` (local, non versionné) : c'est ce qui lui permet de savoir, au lancement suivant, si une nouvelle publication est disponible. Sans connexion, la vérification est simplement signalée comme non effectuée et n'empêche jamais de travailler avec les fichiers déjà présents.
+
+### Téléchargement manuel (repli)
+
+Les champs de chemin de l'étape 4 restent utilisables pour pointer vers des fichiers placés ailleurs (autre dossier, disque réseau) ou téléchargés à la main.
 
 Téléchargement des fichiers Parquet SIRENE: https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret
 
@@ -191,6 +206,8 @@ Impact de l'absence des fichiers optionnels sur le résultat:
 - Sans `stocketablissementhistorique`: aucune adresse ou statut antérieur n'est disponible pour un SIRET; l'application ne peut plus confirmer un historique de déménagement et se limite à l'état courant (photo unique) fourni par `stocketablissement`.
 
 L’application détecte les colonnes disponibles de manière défensive selon le millésime et n’échoue pas si certaines colonnes attendues sont absentes.
+
+**Nomenclature d'activité (NAF).** L'Insee publie progressivement les colonnes NAF 2025 à côté des colonnes historiques (NAF rév. 2), avant bascule définitive prévue en janvier 2027. L'application accepte les deux : elle utilise la colonne historique tant qu'elle est présente, sinon la colonne NAF 2025. Le bloc « Diagnostic des schémas détectés », en bas de la page de résultats, indique pour chaque table la nomenclature effectivement retenue — c'est là qu'il faut regarder pour savoir si un export référence l'ancienne ou la nouvelle classification.
 
 ### Détection automatique des fichiers (et que faire si elle échoue)
 

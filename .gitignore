@@ -7,6 +7,10 @@ venv/
 *.log
 .DS_Store
 *.parquet
+*.parquet.part
+
+# Manifeste local de version des donnees SIRENE (etat propre a chaque poste)
+.sirene_manifest.json
 
 # Outils / caches de dev
 *.egg-info/

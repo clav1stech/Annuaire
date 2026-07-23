@@ -14,9 +14,12 @@ APP_DESCRIPTION = (
 )
 
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
 def _read_version() -> str:
     """Read the project version from the root VERSION file (single source of truth)."""
-    version_path = Path(__file__).resolve().parent.parent / "VERSION"
+    version_path = PROJECT_ROOT / "VERSION"
     return version_path.read_text(encoding="utf-8").strip()
 
 
@@ -28,6 +31,76 @@ DEFAULT_SUCCESSION_PATH = "StockEtablissementLiensSuccession_utf8.parquet"
 DEFAULT_HISTORIQUE_PATH = "StockEtablissementHistorique_utf8.parquet"
 
 SUPPORTED_INPUT_EXTENSIONS = {".xlsx", ".csv", ".parquet"}
+
+# --- Source distante des fichiers SIRENE (data.gouv.fr) ----------------------
+
+# Jeu de données officiel "Base Sirene des entreprises et de leurs établissements
+# (SIREN, SIRET)". L'identifiant est stable, contrairement au slug de l'URL publique.
+DATAGOUV_DATASET_ID = "5b7ffc618b4c4169d30727e0"
+DATAGOUV_DATASET_URL_TEMPLATE = "https://www.data.gouv.fr/api/1/datasets/{dataset_id}/"
+DATAGOUV_PARQUET_FORMAT = "parquet"
+DATAGOUV_TIMEOUT_SECONDS = 15
+DATAGOUV_MAX_ATTEMPTS = 2
+DATAGOUV_USER_AGENT = f"{APP_NAME}/{__version__}"
+
+# Catégories de fichiers SIRENE exploitées par l'application. Les clés sont communes
+# à la détection locale (io_utils) et à la résolution distante (datagouv_client).
+SIRENE_DATA_CATEGORIES = (
+    "stocketablissement",
+    "stockunitelegale",
+    "stocketablissementlienssuccession",
+    "stocketablissementhistorique",
+)
+
+SIRENE_CATEGORY_LABELS = {
+    "stocketablissement": "StockEtablissement",
+    "stockunitelegale": "StockUniteLegale",
+    "stocketablissementlienssuccession": "StockEtablissementLiensSuccession",
+    "stocketablissementhistorique": "StockEtablissementHistorique",
+}
+
+SIRENE_CATEGORY_DEFAULT_FILENAMES = {
+    "stocketablissement": DEFAULT_STOCKETABLISSEMENT_PATH,
+    "stockunitelegale": DEFAULT_STOCKUNITELEGALE_PATH,
+    "stocketablissementlienssuccession": DEFAULT_SUCCESSION_PATH,
+    "stocketablissementhistorique": DEFAULT_HISTORIQUE_PATH,
+}
+
+# Fragments de titre de ressource permettant de classer une ressource data.gouv.fr.
+# L'ordre est significatif : "stocketablissement" est un préfixe de
+# "stocketablissementhistorique" et "stocketablissementlienssuccession", et
+# "stockunitelegale" un préfixe de "stockunitelegalehistorique". Les fragments les plus
+# spécifiques doivent donc être testés en premier. Les catégories hors périmètre
+# applicatif figurent dans la liste pour être classées puis écartées, jamais confondues
+# avec une catégorie voisine.
+DATAGOUV_RESOURCE_TITLE_FRAGMENTS = (
+    ("stocketablissementlienssuccession", "stocketablissementlienssuccession"),
+    ("stocketablissementhistorique", "stocketablissementhistorique"),
+    ("stockunitelegalehistorique", "stockunitelegalehistorique"),
+    ("stockunitelegale", "stockunitelegale"),
+    ("stocketablissement", "stocketablissement"),
+    ("stockdoublons", "stockdoublons"),
+)
+
+# --- Manifeste local de version des données ---------------------------------
+
+SIRENE_MANIFEST_FILENAME = ".sirene_manifest.json"
+SIRENE_MANIFEST_VERSION = 1
+
+DATA_STATUS_ABSENT = "absent"
+DATA_STATUS_UP_TO_DATE = "à jour"
+DATA_STATUS_OUTDATED = "obsolète"
+
+DATA_FRESHNESS_CACHE_TTL_SECONDS = 3600
+
+# --- Téléchargement ---------------------------------------------------------
+
+# Les fichiers SIRENE pèsent jusqu'à plusieurs gigaoctets : des blocs larges limitent
+# le nombre d'aller-retours et de rafraîchissements d'interface pendant le transfert.
+DOWNLOAD_CHUNK_SIZE_BYTES = 8 * 1024 * 1024
+DOWNLOAD_TIMEOUT_SECONDS = 60
+DOWNLOAD_TEMP_SUFFIX = ".part"
+BYTES_PER_MO = 1024 * 1024
 
 REQUIRED_SHEETS = ["controle_siret", "all_etablissements", "move_candidates"]
 OPTIONAL_SHEETS = ["succession_links", "historique", "params_logs"]

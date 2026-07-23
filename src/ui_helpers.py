@@ -112,3 +112,25 @@ def render_progress_metrics(
     c4.metric("Échecs",      failed,           delta=pct_failed,   delta_color="inverse")
     if candidates_found > 0:
         c5.metric("Candidats", candidates_found, delta=avg_cands, delta_color="off")
+
+
+def render_download_metrics(
+    *,
+    progress_percent: int,
+    downloaded_mo: float,
+    total_mo: float | None,
+    file_index: int,
+    file_count: int,
+    elapsed_seconds: float | None = None,
+) -> None:
+    """Render download progress metrics under progress bar."""
+    speed_delta: str | None = None
+    if elapsed_seconds and elapsed_seconds > 0 and downloaded_mo > 0:
+        speed_delta = f"{downloaded_mo / elapsed_seconds:.1f} Mo/s"
+
+    volume = f"{downloaded_mo:,.0f} / {total_mo:,.0f} Mo" if total_mo else f"{downloaded_mo:,.0f} Mo"
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Avancement", f"{progress_percent} %")
+    c2.metric("Volume", volume, delta=speed_delta, delta_color="off")
+    c3.metric("Fichier", f"{file_index} / {file_count}")
