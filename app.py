@@ -305,6 +305,7 @@ def _render_input_export_columns_selector(columns: list[str]) -> list[str]:
     st.session_state[state_key] = selection_map
 
     selected: list[str] = [col for col in columns if selection_map.get(col, False)]
+    col_positions = {col_name: pos for pos, col_name in enumerate(columns)}
     with st.expander("Colonnes d'entree a exporter", expanded=False):
         st.caption("Cochez les colonnes d'entree a inclure dans le report final.")
         filter_text = st.text_input(
@@ -317,11 +318,13 @@ def _render_input_export_columns_selector(columns: list[str]) -> list[str]:
         if action_cols[0].button("Tout cocher", key=f"input_cols_select_all_{signature}"):
             for col in columns:
                 selection_map[col] = True
+                st.session_state[f"input_export_col_{signature}_{col_positions[col]}"] = True
             st.session_state[state_key] = selection_map
             st.rerun()
         if action_cols[1].button("Tout decocher", key=f"input_cols_clear_all_{signature}"):
             for col in columns:
                 selection_map[col] = False
+                st.session_state[f"input_export_col_{signature}_{col_positions[col]}"] = False
             st.session_state[state_key] = selection_map
             st.rerun()
 
@@ -332,7 +335,6 @@ def _render_input_export_columns_selector(columns: list[str]) -> list[str]:
             st.info("Aucune colonne ne correspond au filtre.")
         else:
             grid = st.columns(3)
-            col_positions = {col_name: pos for pos, col_name in enumerate(columns)}
             for idx, col in enumerate(filtered_columns):
                 widget_key = f"input_export_col_{signature}_{col_positions.get(col, idx)}"
                 checked = grid[idx % 3].checkbox(

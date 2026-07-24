@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.1 - 2026-07-24
+- Correctif : boutons Tout cocher/Tout decocher des colonnes d'entree sans effet visuel (etat des cases a cocher non synchronise) ; suppression du FutureWarning pandas lors du nettoyage des lignes vides.
+
 ## 1.1.0 - 2026-07-23
 - Téléchargement automatique des fichiers Parquet SIRENE depuis data.gouv.fr (détection des versions publiées, manifeste local de version, bouton unique de mise à jour avec barre de progression et volume en Mo) ; tolérance aux deux nomenclatures NAF (rév. 2 et NAF 2025), la nomenclature retenue étant exposée dans le diagnostic de schéma.
 
