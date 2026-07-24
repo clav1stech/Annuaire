@@ -13,12 +13,17 @@ import streamlit as st
 from src.config import (
     APP_DESCRIPTION,
     APP_TITLE,
+    DATA_FRESHNESS_CACHE_TTL_SECONDS,
     DEFAULT_HISTORIQUE_PATH,
     DEFAULT_STOCKETABLISSEMENT_PATH,
     DEFAULT_STOCKUNITELEGALE_PATH,
     DEFAULT_SUCCESSION_PATH,
+    SIRENE_CATEGORY_LABELS,
     build_default_output_path,
 )
+from src.data_manifest import download_category, get_data_freshness_status
+from src.datagouv_client import DataGouvError, fetch_remote_resources
+from src.download_utils import DownloadError
 from src.export_utils import build_export_sheets, save_excel_file, to_excel_bytes
 from src.io_utils import (
     SIRENE_REQUIRED_CATEGORIES,
@@ -35,7 +40,9 @@ from src.siret_utils import build_siret_validation_frame, normalize_digits
 from src.ui_helpers import (
     browse_save_excel_path,
     default_output_filename,
+    render_download_metrics,
     render_progress_metrics,
+    render_sirene_data_panel,
     show_dataframe_preview,
     show_metrics,
     show_warnings,
@@ -101,12 +108,98 @@ def _render_version_status() -> None:
             f"Nouvelle version disponible : {status.local_version} → {status.remote_version}."
         )
         _render_update_action()
+    elif status.ahead_of_remote:
+        st.caption(f"Version {status.local_version} (dev).")
     elif status.check_ok:
         st.caption(f"Version {status.local_version} (à jour).")
     else:
         st.caption(
             f"Version {status.local_version} — vérification de mise à jour impossible : {status.error}"
         )
+
+
+@st.cache_data(ttl=DATA_FRESHNESS_CACHE_TTL_SECONDS, show_spinner=False)
+def _cached_data_freshness(detected_paths: dict[str, str]):
+    return get_data_freshness_status(detected_paths)
+
+
+def _download_sirene_data(categories: list[str]) -> None:
+    """Télécharger séquentiellement les catégories demandées, puis relancer le rendu.
+
+    Les métadonnées sont réinterrogées au moment du clic plutôt que reprises du statut mis
+    en cache : une republication survenue entre-temps doit être téléchargée telle quelle,
+    sans quoi le manifeste enregistrerait une version qui n'est pas celle du fichier reçu.
+    """
+    try:
+        resources = fetch_remote_resources()
+    except DataGouvError as exc:
+        st.error(f"Téléchargement impossible : {exc}")
+        return
+
+    file_count = len(categories)
+    progress_bar = st.progress(0, text="Préparation du téléchargement...")
+    metrics_placeholder = st.empty()
+    downloaded: list[str] = []
+    errors: list[str] = []
+
+    for file_index, category in enumerate(categories, start=1):
+        label = SIRENE_CATEGORY_LABELS.get(category, category)
+        resource = resources.get(category)
+        if resource is None:
+            errors.append(f"{label} : ressource absente du catalogue data.gouv.fr.")
+            continue
+
+        started_at = monotonic()
+        last_emit = {"at": 0.0}
+
+        def on_progress(
+            percent: int,
+            downloaded_mo: float,
+            total_mo: float | None,
+            *,
+            _label: str = label,
+            _index: int = file_index,
+            _started: float = started_at,
+            _last: dict[str, float] = last_emit,
+        ) -> None:
+            now = monotonic()
+            if percent < 100 and now - _last["at"] < 0.5:
+                return
+            _last["at"] = now
+            progress_bar.progress(percent, text=f"{_label} — {percent} %")
+            with metrics_placeholder.container():
+                render_download_metrics(
+                    progress_percent=percent,
+                    downloaded_mo=downloaded_mo,
+                    total_mo=total_mo,
+                    file_index=_index,
+                    file_count=file_count,
+                    elapsed_seconds=now - _started,
+                )
+
+        try:
+            download_category(resource, progress_callback=on_progress)
+            downloaded.append(label)
+        except DownloadError as exc:
+            errors.append(f"{label} : {exc}")
+
+    st.session_state["sirene_download_outcome"] = {"downloaded": downloaded, "errors": errors}
+    _cached_data_freshness.clear()
+    st.rerun()
+
+
+def _render_sirene_data_status(detected_paths: dict[str, str]) -> None:
+    """Fraîcheur des données SIRENE et mise à jour en un clic."""
+    outcome = st.session_state.pop("sirene_download_outcome", None)
+    if outcome is not None:
+        if outcome["downloaded"]:
+            st.success("Fichier(s) SIRENE mis à jour : " + ", ".join(outcome["downloaded"]) + ".")
+        for message in outcome["errors"]:
+            st.error(f"Téléchargement échoué — {message}")
+
+    status = _cached_data_freshness(detected_paths)
+    if render_sirene_data_panel(status):
+        _download_sirene_data([item.category for item in status.stale])
 
 
 def _normalize_text(value: object) -> str:
@@ -212,6 +305,7 @@ def _render_input_export_columns_selector(columns: list[str]) -> list[str]:
     st.session_state[state_key] = selection_map
 
     selected: list[str] = [col for col in columns if selection_map.get(col, False)]
+    col_positions = {col_name: pos for pos, col_name in enumerate(columns)}
     with st.expander("Colonnes d'entree a exporter", expanded=False):
         st.caption("Cochez les colonnes d'entree a inclure dans le report final.")
         filter_text = st.text_input(
@@ -224,11 +318,13 @@ def _render_input_export_columns_selector(columns: list[str]) -> list[str]:
         if action_cols[0].button("Tout cocher", key=f"input_cols_select_all_{signature}"):
             for col in columns:
                 selection_map[col] = True
+                st.session_state[f"input_export_col_{signature}_{col_positions[col]}"] = True
             st.session_state[state_key] = selection_map
             st.rerun()
         if action_cols[1].button("Tout decocher", key=f"input_cols_clear_all_{signature}"):
             for col in columns:
                 selection_map[col] = False
+                st.session_state[f"input_export_col_{signature}_{col_positions[col]}"] = False
             st.session_state[state_key] = selection_map
             st.rerun()
 
@@ -239,7 +335,6 @@ def _render_input_export_columns_selector(columns: list[str]) -> list[str]:
             st.info("Aucune colonne ne correspond au filtre.")
         else:
             grid = st.columns(3)
-            col_positions = {col_name: pos for pos, col_name in enumerate(columns)}
             for idx, col in enumerate(filtered_columns):
                 widget_key = f"input_export_col_{signature}_{col_positions.get(col, idx)}"
                 checked = grid[idx % 3].checkbox(
@@ -274,6 +369,9 @@ def _render_schema_report(result: ProcessResult) -> None:
         for table_name, details in result.schema_report.items():
             st.markdown(f"**{table_name}**")
             st.write(f"- Available columns count: {details.get('available_columns_count', 0)}")
+            naf_nomenclature = details.get("naf_nomenclature")
+            if naf_nomenclature:
+                st.write(f"- Nomenclature NAF résolue : {naf_nomenclature}")
             resolved = details.get("resolved_columns", {})
             if resolved:
                 st.json(resolved)
@@ -315,12 +413,17 @@ def main() -> None:
     if missing_required:
         st.error(
             "Fichier(s) Parquet SIRENE obligatoire(s) introuvable(s) à la racine du dossier du "
-            f"projet : {', '.join(missing_required)}. Téléchargez-les et placez-les à côté de "
-            "`app.py`, ou renseignez le chemin manuellement à l'étape 4 ci-dessous "
-            "(voir la section 'Fichiers SIRENE attendus' du README)."
+            f"projet : {', '.join(missing_required)}. Utilisez le bouton « Mettre à jour les "
+            "données SIRENE » ci-dessous pour les télécharger, ou renseignez le chemin "
+            "manuellement à l'étape 4 (voir la section 'Fichiers SIRENE attendus' du README)."
         )
     for warning_message in detected.warnings:
         st.warning(warning_message)
+
+    # Le téléchargement des données doit rester accessible sans avoir chargé de fichier
+    # utilisateur : c'est justement l'état d'un poste neuf, où aucune autre étape n'est
+    # franchissable tant que les Parquet manquent.
+    _render_sirene_data_status(dict(detected.paths))
 
     if "output_path_locked" not in st.session_state:
         st.session_state["output_path_locked"] = False

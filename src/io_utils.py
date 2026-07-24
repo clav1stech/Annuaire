@@ -136,7 +136,8 @@ def list_excel_sheets(file_obj: object) -> list[str]:
 
 def _drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
     """Drop rows that are fully empty or whitespace-only."""
-    cleaned = df.replace(r"^\s*$", pd.NA, regex=True)
+    with pd.option_context("future.no_silent_downcasting", True):
+        cleaned = df.replace(r"^\s*$", pd.NA, regex=True)
     cleaned = cleaned.dropna(axis=0, how="all")
     cleaned = cleaned.reset_index(drop=True)
     return cleaned

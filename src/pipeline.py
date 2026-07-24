@@ -23,6 +23,11 @@ from .config import (
     UNITE_LEGALE_CANONICAL_FIELDS,
 )
 from .sirene_queries import SireneQueryService, SireneSources
+from .sirene_schema import (
+    NAF_TABLE_ETABLISSEMENT,
+    NAF_TABLE_UNITE_LEGALE,
+    resolve_naf_column,
+)
 from .siret_utils import (
     build_address,
     build_siret_validation_frame,
@@ -1075,6 +1080,9 @@ def run_siret_control_pipeline(
         schema_report["stocketablissement"] = {
             "available_columns_count": len(combined_etab_columns),
             "resolved_columns": combined_etab_map,
+            "naf_nomenclature": resolve_naf_column(
+                combined_etab_columns, NAF_TABLE_ETABLISSEMENT
+            ).label,
         }
         missing_etab = [c for c in ETABLISSEMENT_CANONICAL_FIELDS if c not in combined_etab_map]
         if missing_etab:
@@ -1182,6 +1190,7 @@ def run_siret_control_pipeline(
         schema_report["stockunitelegale"] = {
             "available_columns_count": len(ul_columns),
             "resolved_columns": ul_map,
+            "naf_nomenclature": resolve_naf_column(ul_columns, NAF_TABLE_UNITE_LEGALE).label,
         }
         missing_ul = [c for c in UNITE_LEGALE_CANONICAL_FIELDS if c not in ul_map]
         if missing_ul:
@@ -1213,6 +1222,7 @@ def run_siret_control_pipeline(
         schema_report["all_etablissements"] = {
             "available_columns_count": len(all_columns),
             "resolved_columns": all_map,
+            "naf_nomenclature": resolve_naf_column(all_columns, NAF_TABLE_ETABLISSEMENT).label,
         }
         all_etab_df = _normalize_id_columns(all_etab_df)
 

@@ -16,6 +16,8 @@
 
 ## tests/
 - Tests `pytest` des fonctions pures (validation SIRET/SIREN, statut, nommage des sorties). Socle de non-régression.
+- `test_data_manifest.py` — client data.gouv.fr, manifeste local et téléchargement, avec HTTP simulé (jamais d'appel réseau réel).
+- `test_sirene_schema.py` — résolution des colonnes, dont la coexistence des nomenclatures NAF rév. 2 / NAF 2025.
 
 ## .github/
 - `workflows/ci.yml` — CI (lint `ruff` + `pytest` sur Python 3.11 à 3.14, typage `mypy` sur une version).
@@ -46,11 +48,18 @@
 - `ui_helpers.py` — fonctions d'aide au rendu Streamlit.
 - `version_check.py` — comparaison version locale / `VERSION` distant sur GitHub (partagé UI + CLI).
 - `updater.py` — application d'une mise à jour (git ou zip), sans interaction ni sortie standard : renvoie un `UpdateOutcome`. Partagé entre `app.py` (bouton d'UI) et `scripts/update_project.py`.
+- `datagouv_client.py` — métadonnées des ressources Parquet SIRENE sur l'API data.gouv.fr (lien permanent, checksum, taille, date de publication). N'ouvre jamais les Parquet.
+- `download_utils.py` — téléchargement en flux avec écriture atomique et rapport de progression. Transport pur, sans connaissance du manifeste ni de l'UI.
+- `data_manifest.py` — manifeste local `.sirene_manifest.json` (gitignoré) : versions téléchargées, comparaison avec le distant (`get_data_freshness_status`), orchestration téléchargement + enregistrement.
+
+## Fichiers d'état locaux (non versionnés)
+- `.sirene_manifest.json` — version des fichiers SIRENE téléchargés (checksum, taille, date de publication, chemin local, date de téléchargement). Écrit uniquement après un téléchargement complet.
 
 ## Flux de dépendances (sens unique)
 `io_utils` / `sirene_queries` (accès données) → `pipeline` (métier) → `export_utils` / `ui_helpers` (présentation) → `app.py` (entrypoint).
 `config.py` et `siret_utils.py` / `sirene_schema.py` sont transverses, utilisables par toutes les couches.
 `version_check.py` / `updater.py` sont transverses eux aussi (`updater` dépend de `version_check`, jamais l'inverse).
+Chaîne données SIRENE, également transverse et à sens unique : `datagouv_client` / `download_utils` → `data_manifest` → `app.py`.
 
 ## docs/
 - `CLAUDE.md` — règles transverses génériques (tout langage/projet).

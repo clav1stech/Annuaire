@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import Iterable
 
 
@@ -26,6 +27,85 @@ def _variants(base: str) -> list[str]:
     )
 
 
+# Nomenclatures d'activité principale. L'INSEE publie les colonnes NAF 2025 à côté des
+# colonnes historiques pendant la période de transition, avant bascule définitive prévue
+# en janvier 2027 : les deux jeux de colonnes coexistent donc dans les Parquet.
+NAF_NOMENCLATURE_LEGACY = "NAF rév. 2 (2008)"
+NAF_NOMENCLATURE_2025 = "NAF 2025"
+
+NAF_TABLE_ETABLISSEMENT = "etablissement"
+NAF_TABLE_UNITE_LEGALE = "unite_legale"
+
+# Ordre significatif : la colonne historique reste prioritaire tant qu'elle est publiée,
+# pour que l'export ne change pas de classification sans décision explicite.
+NAF_COLUMN_CANDIDATES: dict[str, tuple[str, tuple[tuple[str, str], ...]]] = {
+    NAF_TABLE_ETABLISSEMENT: (
+        "activitePrincipaleEtablissement",
+        (
+            (NAF_NOMENCLATURE_LEGACY, "activitePrincipaleEtablissement"),
+            (NAF_NOMENCLATURE_2025, "activitePrincipaleNAF25Etablissement"),
+        ),
+    ),
+    NAF_TABLE_UNITE_LEGALE: (
+        "activitePrincipaleUniteLegale",
+        (
+            (NAF_NOMENCLATURE_LEGACY, "activitePrincipaleUniteLegale"),
+            (NAF_NOMENCLATURE_2025, "activitePrincipaleNAF25UniteLegale"),
+        ),
+    ),
+}
+
+
+@dataclass(frozen=True)
+class NafResolution:
+    """Nomenclature NAF effectivement retenue pour une table SIRENE."""
+
+    table: str
+    canonical: str
+    nomenclature: str | None
+    column: str | None
+
+    @property
+    def resolved(self) -> bool:
+        return self.column is not None
+
+    @property
+    def label(self) -> str:
+        """Libellé prêt pour le diagnostic de schéma affiché à l'utilisateur."""
+        if not self.resolved:
+            return "aucune colonne d'activité principale détectée"
+        return f"{self.nomenclature} (colonne {self.column})"
+
+
+def resolve_naf_column(available_columns: Iterable[str], table: str) -> NafResolution:
+    """Identifier la colonne d'activité principale disponible et sa nomenclature."""
+    canonical, candidates = NAF_COLUMN_CANDIDATES[table]
+    by_token = {normalize_column_token(col): col for col in available_columns}
+    for nomenclature, candidate in candidates:
+        match = by_token.get(normalize_column_token(candidate))
+        if match:
+            return NafResolution(
+                table=table,
+                canonical=canonical,
+                nomenclature=nomenclature,
+                column=match,
+            )
+    return NafResolution(table=table, canonical=canonical, nomenclature=None, column=None)
+
+
+def _naf_aliases(table: str) -> list[str]:
+    """Variantes de nom acceptées pour la colonne d'activité principale d'une table.
+
+    Les deux nomenclatures alimentent la même colonne canonique : l'aval du pipeline
+    n'a pas à connaître le millésime, seul le diagnostic de schéma l'expose.
+    """
+    _, candidates = NAF_COLUMN_CANDIDATES[table]
+    aliases: list[str] = []
+    for _, candidate in candidates:
+        aliases.extend(_variants(candidate))
+    return aliases
+
+
 ETABLISSEMENT_COLUMN_ALIASES: dict[str, list[str]] = {
     "siret": _variants("siret"),
     "siren": _variants("siren"),
@@ -34,7 +114,7 @@ ETABLISSEMENT_COLUMN_ALIASES: dict[str, list[str]] = {
     "dateCreationEtablissement": _variants("dateCreationEtablissement"),
     "dateDebut": _variants("dateDebut"),
     "dateFin": _variants("dateFin"),
-    "activitePrincipaleEtablissement": _variants("activitePrincipaleEtablissement"),
+    "activitePrincipaleEtablissement": _naf_aliases(NAF_TABLE_ETABLISSEMENT),
     "nomenclatureActivitePrincipaleEtablissement": _variants(
         "nomenclatureActivitePrincipaleEtablissement"
     ),
@@ -63,7 +143,7 @@ UNITE_LEGALE_COLUMN_ALIASES: dict[str, list[str]] = {
     "etatAdministratifUniteLegale": _variants("etatAdministratifUniteLegale"),
     "statutDiffusionUniteLegale": _variants("statutDiffusionUniteLegale"),
     "categorieJuridiqueUniteLegale": _variants("categorieJuridiqueUniteLegale"),
-    "activitePrincipaleUniteLegale": _variants("activitePrincipaleUniteLegale"),
+    "activitePrincipaleUniteLegale": _naf_aliases(NAF_TABLE_UNITE_LEGALE),
     "nomenclatureActivitePrincipaleUniteLegale": _variants(
         "nomenclatureActivitePrincipaleUniteLegale"
     ),

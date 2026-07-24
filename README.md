@@ -13,8 +13,8 @@ Toutes les étapes, dans l'ordre, avec leur fréquence et un lien direct vers la
 | 1 | Installer Python | Une fois | [Installer Python](#installer-python-si-nécessaire) |
 | 2 | Télécharger le projet et le décompresser | Une fois | [Installation](#installation-une-seule-fois) |
 | 3 | Lancer le script d'installation (`create_venv`) | Une fois | [Installation](#installation-une-seule-fois) |
-| 4 | Télécharger les fichiers SIRENE (Parquet) sur data.gouv.fr | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
-| 5 | **Placer ces fichiers Parquet dans le dossier du projet** | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
+| 4 | Télécharger les fichiers SIRENE (Parquet) — bouton **« Mettre à jour les données SIRENE »** en haut de l'interface | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
+| 5 | *(uniquement en téléchargement manuel)* **Placer ces fichiers Parquet dans le dossier du projet** | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
 | 6 | Lancer l'application (`run_app`) | À chaque usage | [Lancement](#lancement-à-chaque-usage) |
 | 7 | Charger son fichier et exécuter le contrôle | À chaque usage | [Exemple d'usage](#exemple-dusage) |
 | 8 | Mettre à jour le code si une nouvelle version est signalée (bouton dans l'interface, ou `update_project`) | Occasionnel | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
@@ -121,6 +121,12 @@ L’interface Streamlit s’ouvre dans le navigateur. Ce script est celui à uti
 
 Le code du projet évolue sur GitHub (corrections, nouvelles fonctionnalités). Cette mise à jour concerne uniquement les fichiers du projet (`app.py`, `src/`, scripts...) — elle n'a aucun rapport avec les fichiers Parquet SIRENE, qui se mettent à jour séparément (voir [Fichiers SIRENE attendus](#fichiers-sirene-attendus)).
 
+> **Deux boutons différents, à ne pas confondre** — ils sont voisins en haut de l'interface :
+> - **« Mettre à jour maintenant »** (bannière de version) → met à jour **le code** de l'application, quelques centaines de kilo-octets, nécessite de relancer `run_app` ensuite.
+> - **« Mettre à jour les données SIRENE »** (encadré « Données SIRENE ») → télécharge **les fichiers Parquet** de l'Insee, plusieurs giga-octets, sans relancer quoi que ce soit.
+>
+> Aucun des deux ne touche à ce que gère l'autre.
+
 ### 1. Détection automatique d'une nouvelle version
 
 À chaque lancement via `run_app.command` / `run_app.bat`, l'application vérifie automatiquement (en quelques secondes, sans bloquer si hors ligne) si une version plus récente existe sur GitHub, en comparant le fichier `VERSION` local à celui de la branche `main` du dépôt. Si une nouvelle version est disponible, un message s'affiche dans le terminal juste avant le lancement de Streamlit, par exemple :
@@ -169,13 +175,43 @@ Si `requirements.txt` a changé dans la mise à jour (nouvelle dépendance ou ve
 
 ## Fichiers SIRENE attendus
 
-> **Mise à jour mensuelle recommandée.** La base SIRENE est republiée par l'Insee chaque mois. Pour travailler sur des données à jour, retélécharger les fichiers ci-dessous (mêmes noms, écraser les anciens ou pointer l'application vers le nouveau dossier) environ une fois par mois. Cette opération est un simple téléchargement/remplacement de fichiers : elle ne touche pas au code et ne nécessite pas de relancer l'installation.
+> **Mise à jour mensuelle recommandée.** La base SIRENE est republiée par l'Insee chaque mois. Pour travailler sur des données à jour, récupérer les fichiers ci-dessous environ une fois par mois — le plus simple étant de laisser l'application le faire (voir juste en dessous). Cette opération est un simple téléchargement/remplacement de fichiers : elle ne touche pas au code et ne nécessite pas de relancer l'installation.
+
+### Téléchargement automatique depuis l'application (recommandé)
+
+Dès l'ouverture de la page, **avant même de charger un fichier à contrôler**, l'application interroge data.gouv.fr et compare la dernière publication aux fichiers présents sur votre poste. Le résultat s'affiche en haut de l'interface, sous forme d'un encadré « Données SIRENE » : une ligne par fichier, avec sa taille et son état.
+
+| Pastille | État | Signification |
+|---|---|---|
+| ✅ | à jour | le fichier local correspond à la dernière publication Insee |
+| 🔄 | obsolète | une publication plus récente existe (ou le fichier a été installé à la main, voir plus bas) |
+| ⬇️ | absent | aucun fichier local pour cette catégorie |
+
+Si au moins un fichier est à récupérer, un bouton **« Mettre à jour les données SIRENE »** affiche le volume total et lance le téléchargement des fichiers concernés, l'un après l'autre, avec barre de progression et compteur en Mo. Les fichiers déjà à jour sont ignorés — inutile donc de tout retélécharger chaque mois : en pratique, seuls les fichiers réellement republiés sont repris.
+
+Points à connaître :
+
+- **Aucun déplacement manuel ensuite.** Les fichiers sont écrits directement dans le dossier du projet, sous les noms attendus par la détection automatique, et les champs de chemin de l'étape 4 se remplissent tout seuls.
+- **Une interruption ne casse rien.** L'écriture se fait dans un fichier temporaire et ne remplace l'ancien qu'une fois le transfert terminé : une coupure réseau ne laisse jamais un Parquet tronqué à la place d'un fichier valide. Il suffit de recliquer sur le bouton.
+- **Prévoir le temps et la place.** Le premier téléchargement représente environ 3,5 à 4 Go pour les 4 fichiers, soit plusieurs minutes selon la connexion.
+- **Comment l'application sait où elle en est.** La version téléchargée est mémorisée dans un fichier `.sirene_manifest.json` (local, non versionné, à côté de `app.py`). Le supprimer n'a d'autre effet que de faire réapparaître les fichiers comme « obsolète — version inconnue » au lancement suivant.
+- **Hors connexion, rien ne bloque.** Si data.gouv.fr est injoignable, l'encadré l'indique simplement et les fichiers déjà présents restent parfaitement utilisables.
+
+> **Fichiers installés à la main :** ils sont détectés et utilisables immédiatement, mais l'application ne peut pas deviner de quel millésime ils datent — elle les affiche donc en 🔄 *obsolète (version inconnue)*, même s'ils sont tout frais. Ce n'est pas une erreur. Pour repartir sur un état net, un clic sur le bouton les remplace par la publication courante et enregistre leur version ; ils passeront alors en ✅.
+
+### Téléchargement manuel (repli)
+
+Le téléchargement automatique ne rend rien obsolète : **les champs de chemin de l'étape 4 restent pleinement utilisables**, et restent la seule option dans plusieurs cas courants — fichiers stockés ailleurs (autre dossier, disque réseau, disque externe), Parquet fourni sous forme de **dossier** de plusieurs morceaux, poste sans accès internet, ou millésime précis à conserver plutôt que la dernière publication.
 
 Téléchargement des fichiers Parquet SIRENE: https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret
 
 > ⚠️ **Attention au format téléchargé : bien prendre les fichiers "(format parquet)"**, et pas les fichiers `.zip` proposés juste au-dessus (qui contiennent des CSV). Sur la page data.gouv.fr, chaque fichier existe en double : une version standard (icône zip, ex. "Sirene : Fichier StockEtablissement - ... .zip") contenant un CSV, et une version "(format parquet)" (icône grille) — c'est **uniquement cette seconde version** qu'il faut télécharger, l'application ne lit pas les CSV.
 
 > ⚠️ **Important : les fichiers Parquet téléchargés doivent être déplacés dans le dossier du projet** (celui où se trouve `app.py`), à côté des scripts `create_venv`/`run_app`. C'est ce qui permet leur détection automatique au lancement (voir [Détection automatique des fichiers](#détection-automatique-des-fichiers-et-que-faire-si-elle-échoue) ci-dessous). Sans ça, il faut renseigner les 4 chemins manuellement à chaque utilisation.
+
+### Les 4 fichiers attendus
+
+Quelle que soit la méthode de récupération (bouton de l'application ou téléchargement manuel), ce sont ces 4 fichiers qui sont utilisés :
 
 - Obligatoires:
   - `stocketablissement` (fichier parquet ou dossier parquet, **≈ 2 Go**) — un enregistrement par établissement (SIRET): adresse, statut administratif (actif/fermé), code activité (NAF), date de création, indicateur siège social. C'est la table de base pour le statut et l'adresse de chaque SIRET.
@@ -192,9 +228,11 @@ Impact de l'absence des fichiers optionnels sur le résultat:
 
 L’application détecte les colonnes disponibles de manière défensive selon le millésime et n’échoue pas si certaines colonnes attendues sont absentes.
 
+**Nomenclature d'activité (NAF).** L'Insee publie progressivement les colonnes NAF 2025 à côté des colonnes historiques (NAF rév. 2), avant bascule définitive prévue en janvier 2027. L'application accepte les deux : elle utilise la colonne historique tant qu'elle est présente, sinon la colonne NAF 2025. Le bloc « Diagnostic des schémas détectés », en bas de la page de résultats, indique pour chaque table la nomenclature effectivement retenue — c'est là qu'il faut regarder pour savoir si un export référence l'ancienne ou la nouvelle classification.
+
 ### Détection automatique des fichiers (et que faire si elle échoue)
 
-Au démarrage, l'application scanne **le dossier du projet** (celui où se trouve `app.py`) et essaie de reconnaître automatiquement les 4 fichiers ci-dessus, pour pré-remplir les champs de chemin. La reconnaissance se fait sur le **nom du fichier**, pas sur son contenu, et elle est volontairement tolérante :
+Au démarrage, l'application scanne **le dossier du projet** (celui où se trouve `app.py`) et essaie de reconnaître automatiquement les 4 fichiers ci-dessus, pour pré-remplir les champs de chemin. Les fichiers récupérés via le bouton **« Mettre à jour les données SIRENE »** y sont écrits sous les noms attendus : cette section ne concerne donc, en pratique, que les fichiers installés manuellement. La reconnaissance se fait sur le **nom du fichier**, pas sur son contenu, et elle est volontairement tolérante :
 
 - insensible à la casse et aux accents (`StockEtablissement`, `stock_etablissement`, `STOCKETABLISSEMENT` sont équivalents),
 - insensible aux ajouts autour du mot-clé — millésime, date, suffixe `utf8`, tirets/underscores (ex. `StockEtablissement_utf8_2026-07.parquet` est bien reconnu comme `stocketablissement`),
