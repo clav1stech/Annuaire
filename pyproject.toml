@@ -37,6 +37,12 @@ testpaths = ["tests"]
 line-length = 100
 target-version = "py311"
 
+[tool.ruff.lint]
+# Regles historiques du projet (defaut ruff avant l'elargissement du select
+# par defaut introduit dans les versions recentes) : on les fixe explicitement
+# pour ne pas depend du "default" de ruff qui peut changer d'une version a l'autre.
+select = ["E4", "E7", "E9", "F"]
+
 [tool.mypy]
 # 3.12 et non 3.11 (plancher du projet) : les stubs livres par numpy utilisent la syntaxe
 # `type` de 3.12, que mypy refuse de parser sous une cible plus basse. La compatibilite
