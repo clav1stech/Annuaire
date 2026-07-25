@@ -55,6 +55,18 @@ xattr -dr com.apple.quarantine .
 
 Cette commande retire l'attribut de quarantaine de tout le dossier du projet. Les scripts `.command` s'ouvrent ensuite normalement en double-clic, sans aucun autre avertissement.
 
+**Si le blocage persiste malgré la commande ci-dessus** (une boîte de dialogue système apparaît toujours) : double-cliquer une fois sur le script pour déclencher le blocage, puis aller dans **Réglages Système → Confidentialité et sécurité**, descendre jusqu'à la section Sécurité. Un message *"run_app.command a été bloqué"* y propose un bouton **Ouvrir quand même** — cliquer dessus, confirmer avec le mot de passe/Touch ID, puis cliquer **Ouvrir** sur le nouveau popup. Cette autorisation est ensuite mémorisée.
+
+### macOS : "permission denied" en lançant un `.command`
+
+Si le terminal répond `zsh: permission denied: ./run_app.command`, c'est que le fichier a perdu son bit exécutable — cela arrive systématiquement en téléchargeant le zip GitHub (l'archive ne conserve pas les permissions Unix), et pouvait aussi arriver après une mise à jour en mode zip avant correction de ce comportement. `sudo` ne sert à rien ici (`cd` est une commande interne au shell, pas un problème de droits admin) : il faut redonner le bit exécutable, une seule fois, depuis Terminal dans le dossier du projet :
+
+```bash
+chmod +x create_venv.command run_app.command update_project.command
+```
+
+Les scripts peuvent ensuite être relancés normalement (`./run_app.command` ou double-clic).
+
 ### Installer Python (si nécessaire)
 
 Vérifier d'abord si Python est déjà installé, en ouvrant un terminal (voir ci-dessus) et en tapant :

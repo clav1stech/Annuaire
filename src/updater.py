@@ -7,7 +7,9 @@ afin de rester appelable depuis Streamlit ; le journal est renvoyé dans `Update
 
 from __future__ import annotations
 
+import filecmp
 import shutil
+import stat
 import subprocess
 import tempfile
 import urllib.error
@@ -113,9 +115,18 @@ def _apply_update_via_zip(outcome: UpdateOutcome) -> bool:
             destination_path = PROJECT_ROOT / relative_path
             if source_path.is_dir():
                 destination_path.mkdir(parents=True, exist_ok=True)
-            else:
-                destination_path.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(source_path, destination_path)
+                continue
+
+            if destination_path.is_file() and filecmp.cmp(source_path, destination_path, shallow=False):
+                # Contenu identique : on ne touche pas au fichier local (permissions, mtime...).
+                continue
+
+            destination_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_path, destination_path)
+            if destination_path.suffix in (".command", ".sh"):
+                # Les archives zip GitHub ne conservent pas le bit exécutable.
+                mode = destination_path.stat().st_mode
+                destination_path.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     outcome.messages.append("Copie terminée.")
     outcome.hint = (
