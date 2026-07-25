@@ -41,7 +41,7 @@
 - Ne jamais faire pointer un tag ailleurs que sur ce commit ; ne jamais déplacer un tag déjà poussé sans confirmation explicite (opération destructive côté remote).
 - Release GitHub (objet "Release", distinct du tag) : seulement à chaque bump Y ou X, jamais pour un simple patch Z. Titrer `vX.Y` (sans le Z).
 - La Release Y/X est marquée **Latest**, jamais **Pre-release**, sauf demande explicite pour une version instable à faire tester.
-- Quand un patch Z sort dans la foulée d'une release Y/X existante, mettre à jour cette Release pour qu'elle pointe sur le tag du dernier patch (`gh release edit vX.Y --tag vX.Y.Z`), plutôt que de la laisser pointer sur un patch périmé.
+- Quand un patch Z sort dans la foulée d'une release Y/X existante, mettre à jour cette Release pour qu'elle pointe sur le tag du dernier patch (`gh release edit vX.Y --tag vX.Y.Z`) **et** régénérer les notes de release avec les entrées CHANGELOG.md correspondantes (`--notes`) dans la même opération : déplacer le tag seul ne met pas à jour le texte, il faut le faire explicitement à chaque bump.
 - Pre-release sur branche de dev : un tag/Release peut être créé sur n'importe quel commit, y compris la tête d'une branche non mergée (ex. `dev/v1.2`) — publier alors en `--prerelease`, jamais en Latest. Au merge dans `main`, retagger/republier sur le commit de merge et retirer le flag Pre-release (ou créer la Release Y/X définitive à ce moment-là).
 - Le mécanisme d'auto-update de l'app lit `VERSION` uniquement sur `main` (`src/version_check.py`, `BRANCH = "main"`) : une pre-release publiée depuis une branche de dev n'est jamais proposée automatiquement aux utilisateurs, seulement accessible via le lien direct de la Release sur GitHub.
 
