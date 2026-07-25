@@ -36,6 +36,13 @@
 - Chaque commit qui bump la version doit mettre à jour CHANGELOG.md dans le même commit (entrée X.Y.Z - date, résumé en tête de fichier).
 - Pas de saisie manuelle séparée : un script dédié régénère/complète le fichier de façon idempotente (n'ajoute que les versions absentes, ne touche pas aux entrées existantes).
 
+## Tags et releases git/GitHub
+- Chaque bump de version (Z, Y ou X) est suivi d'un tag git annoté `vX.Y.Z` sur le commit de bump exact (celui qui contient le VERSION à jour), poussé avec `git push origin vX.Y.Z`.
+- Ne jamais faire pointer un tag ailleurs que sur ce commit ; ne jamais déplacer un tag déjà poussé sans confirmation explicite (opération destructive côté remote).
+- Release GitHub (objet "Release", distinct du tag) : seulement à chaque bump Y ou X, jamais pour un simple patch Z. Titrer `vX.Y` (sans le Z).
+- La Release Y/X est marquée **Latest**, jamais **Pre-release**, sauf demande explicite pour une version instable à faire tester.
+- Quand un patch Z sort dans la foulée d'une release Y/X existante, mettre à jour cette Release pour qu'elle pointe sur le tag du dernier patch (`gh release edit vX.Y --tag vX.Y.Z`), plutôt que de la laisser pointer sur un patch périmé.
+
 ## Non-régression obligatoire pour tout refactor
 1. Capturer un état de référence AVANT toute modification (calculs, rendu, sorties) via un harnais dédié, en lecture seule sur les données.
 2. Modifier le code.
