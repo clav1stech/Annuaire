@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.2 - 2026-07-25
+- Mise a jour zip ne copie que les fichiers modifies et retablit le bit executable des .command.
+
 ## 1.1.1 - 2026-07-24
 - Correctif : boutons Tout cocher/Tout decocher des colonnes d'entree sans effet visuel (etat des cases a cocher non synchronise) ; suppression du FutureWarning pandas lors du nettoyage des lignes vides.
 
