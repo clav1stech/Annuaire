@@ -362,6 +362,10 @@ def build_column_dictionary_sheet(siret_overview: pd.DataFrame) -> pd.DataFrame:
         "siren": "SIREN de l'entreprise (9 chiffres).",
         "nic": "NIC de l'établissement (5 chiffres).",
         "denomination_entreprise": "Nom/raison sociale principale de l'entreprise.",
+        "tva_intracom": (
+            "Numéro de TVA intracommunautaire calculé à partir du SIREN "
+            "(FR + clé mod 97 + SIREN). Non fourni par la SIRENE, à valider avant usage officiel."
+        ),
         "etatAdministratifEtablissement": "État administratif de l'établissement (A/F).",
         "etatAdministratifUniteLegale": "État administratif de l'unité légale.",
         "adresse_reconstituee": "Adresse établissement reconstituée en une ligne.",
@@ -1302,6 +1306,7 @@ def _style_siret_overview_sheet(
         "analysis_status_note": 55,
         "adresse_reconstituee": 42,
         "denomination_entreprise": 36,
+        "tva_intracom": 16,
         "cleaning_action": 34,
     }
     for idx, col in enumerate(df.columns, start=1):

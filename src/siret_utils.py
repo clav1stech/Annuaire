@@ -117,6 +117,15 @@ def classify_etablissement_status(etat_admin: Any) -> str:
     return SIRET_STATUS_FOUND_UNKNOWN
 
 
+def compute_tva_intracom(siren: Any) -> str:
+    """Compute the French intra-community VAT number from a 9-digit SIREN."""
+    digits = normalize_digits(siren)
+    if len(digits) != 9 or not digits.isdigit():
+        return ""
+    key = (12 + 3 * (int(digits) % 97)) % 97
+    return f"FR{key:02d}{digits}"
+
+
 def first_non_empty(values: list[Any]) -> str:
     """Return the first meaningful value in a list."""
     for value in values:
