@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.3 - 2026-07-29
+- Ajout du n° de TVA intracommunautaire calculé (à partir du SIREN) dans les feuilles de sortie de l'export Excel.
+
 ## 1.1.2 - 2026-07-25
 - Mise a jour zip ne copie que les fichiers modifies et retablit le bit executable des .command.
 
