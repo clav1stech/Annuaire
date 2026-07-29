@@ -19,6 +19,7 @@ from src.siret_utils import (
     build_address,
     build_siret_validation_frame,
     classify_etablissement_status,
+    compute_tva_intracom,
     first_non_empty,
     is_luhn_valid,
     normalize_digits,
@@ -135,6 +136,19 @@ class TestFirstNonEmpty:
 
     def test_all_empty(self):
         assert first_non_empty([None, "", "NaN"]) == ""
+
+
+class TestComputeTvaIntracom:
+    def test_known_siren(self):
+        # Formule officielle : cle = (12 + 3 * (SIREN mod 97)) mod 97.
+        assert compute_tva_intracom(VALID_SIREN) == "FR44732829320"
+
+    def test_strips_non_digits_before_computing(self):
+        assert compute_tva_intracom("732 829 320") == "FR44732829320"
+
+    @pytest.mark.parametrize("value", ["", None, "123", "12345678901"])
+    def test_invalid_length_returns_empty(self, value):
+        assert compute_tva_intracom(value) == ""
 
 
 class TestBuildAddress:

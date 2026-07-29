@@ -32,6 +32,7 @@ from .siret_utils import (
     build_address,
     build_siret_validation_frame,
     classify_etablissement_status,
+    compute_tva_intracom,
     first_non_empty,
     normalize_digits,
 )
@@ -655,6 +656,7 @@ def _build_siret_overview(
 
     overview["analysis_status_note"] = overview.apply(build_status_note, axis=1)
     overview = _apply_closed_row_data_policy(overview, all_etablissements=all_etablissements)
+    overview["tva_intracom"] = overview["siren"].map(compute_tva_intracom)
     _active_mask = overview["siret_status"].eq(SIRET_STATUS_ACTIVE)
     _replacement_mask = (
         overview["siret_status"].eq(SIRET_STATUS_CLOSED)
@@ -721,6 +723,7 @@ def _build_siret_overview(
             "siren",
             "nic",
             "denomination_entreprise",
+            "tva_intracom",
             "etatAdministratifEtablissement",
             "etatAdministratifUniteLegale",
             "adresse_reconstituee",
@@ -1320,6 +1323,7 @@ def run_siret_control_pipeline(
         axis=1,
     )
     controle["denomination_entreprise"] = controle.apply(_build_denomination_entreprise, axis=1)
+    controle["tva_intracom"] = controle["siren"].map(compute_tva_intracom)
 
     controle["siret_status"] = SIRET_STATUS_INVALID
     valid_mask = controle["siret_format_ok"].astype(bool)
@@ -1397,6 +1401,7 @@ def run_siret_control_pipeline(
             "nic",
             "adresse_reconstituee",
             "denomination_entreprise",
+            "tva_intracom",
             "total_etablissements",
             "total_etablissements_actifs",
             "total_etablissements_fermes",
