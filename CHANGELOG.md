@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.7 - 2026-08-05
+- Clé de contrôle SIRET de La Poste : les SIRET du SIREN 356000000 sont désormais reconnus valides quand la somme de leurs 14 chiffres est un multiple de 5 (règle INSEE propre à ce SIREN), en plus de la clé de Luhn ; ils étaient jusqu'ici classés `INVALID_SIRET_FORMAT` à tort.
+
 ## 1.1.6 - 2026-08-05
 - `run_app` devient le seul script à lancer : il crée l'environnement virtuel au premier démarrage (plus besoin de lancer `create_venv` séparément) et répare un environnement incomplet avant d'ouvrir l'application.
 
