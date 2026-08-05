@@ -3,7 +3,7 @@
 > À lire avant toute intervention, à tenir à jour à chaque changement de structure (cf. `docs/CLAUDE.md` § Architecture et dépendances).
 
 ## Racine
-- `app.py` — point d'entrée Streamlit principal (contrôle de SIRET, enrichissement SIRENE).
+- `app.py` — point d'entrée Streamlit principal (contrôle de SIRET, enrichissement SIRENE, mise à jour du code en ligne ou par dépôt d'un ZIP GitHub).
 - `VERSION` — source de vérité du numéro de version sémantique (X.Y.Z).
 - `CHANGELOG.md` — historique des versions, mis à jour uniquement via `scripts/update_changelog.py`.
 - `AGENTS.md` — point d'entrée IA, renvoie vers `docs/CLAUDE.md`.
@@ -53,7 +53,7 @@
 - `export_utils.py` — génération du rapport Excel (feuilles, mise en forme).
 - `ui_helpers.py` — fonctions d'aide au rendu Streamlit.
 - `version_check.py` — comparaison version locale / `VERSION` distant sur GitHub (partagé UI + CLI).
-- `updater.py` — application d'une mise à jour (git ou zip), sans interaction ni sortie standard : renvoie un `UpdateOutcome`. Partagé entre `app.py` (bouton d'UI) et `scripts/update_project.py`.
+- `updater.py` — application d'une mise à jour (git, ZIP téléchargé ou ZIP GitHub déposé manuellement), avec validation de l'archive et copie des seuls fichiers différents ; sans interaction ni sortie standard, renvoie un `UpdateOutcome`. Partagé entre `app.py` et `scripts/update_project.py`.
 - `dependencies.py` — cohérence entre `requirements.txt` et les paquets installés : empreinte des dépendances enregistrée dans l'environnement virtuel, détection de désynchronisation, réinstallation pip. Transverse, sans sortie standard (`InstallOutcome`).
 - `datagouv_client.py` — métadonnées des ressources Parquet SIRENE sur l'API data.gouv.fr (lien permanent, checksum, taille, date de publication). N'ouvre jamais les Parquet.
 - `download_utils.py` — téléchargement en flux avec écriture atomique et rapport de progression. Transport pur, sans connaissance du manifeste ni de l'UI.

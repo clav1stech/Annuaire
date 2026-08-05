@@ -19,6 +19,7 @@ from src.config import (
     DEFAULT_STOCKUNITELEGALE_PATH,
     DEFAULT_SUCCESSION_PATH,
     SIRENE_CATEGORY_LABELS,
+    UPDATE_ARCHIVE_MAX_UPLOAD_MO,
     build_default_output_path,
 )
 from src.atomic_io import AtomicWriteError
@@ -49,7 +50,7 @@ from src.ui_helpers import (
     show_warnings,
     step_header,
 )
-from src.updater import apply_update
+from src.updater import apply_update, apply_update_from_zip
 from src.version_check import get_version_status
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -121,6 +122,64 @@ def _render_version_status() -> None:
         st.caption(
             f"Version {status.local_version} — vérification de mise à jour impossible : {status.error}"
         )
+    _render_manual_update_action()
+
+
+def _render_manual_update_action() -> None:
+    """Repli hors ligne : appliquer une archive GitHub déposée dans l'interface."""
+    with st.expander("Mise à jour hors ligne depuis un ZIP GitHub"):
+        outcome = st.session_state.get("manual_update_outcome")
+        if outcome is None:
+            st.caption(
+                "Téléchargez le ZIP de la branche `main` depuis un poste ayant accès à GitHub, "
+                "puis glissez-le ici. Seuls les fichiers de code différents seront remplacés ; "
+                "les données SIRENE, exports et environnements locaux resteront intacts."
+            )
+            archive = st.file_uploader(
+                "Archive ZIP du projet Annuaire",
+                type="zip",
+                accept_multiple_files=False,
+                key="manual_update_zip",
+                max_upload_size=UPDATE_ARCHIVE_MAX_UPLOAD_MO,
+            )
+            if st.button(
+                "Appliquer la mise à jour hors ligne",
+                type="primary",
+                disabled=archive is None,
+                key="apply_manual_update",
+            ):
+                with st.spinner("Validation et mise à jour en cours..."):
+                    st.session_state["manual_update_outcome"] = apply_update_from_zip(
+                        archive.getvalue()
+                    )
+                _cached_version_status.clear()
+                st.rerun()
+            return
+
+        for message in outcome.messages:
+            st.caption(message)
+        if not outcome.applied:
+            st.error(f"Mise à jour non appliquée : {outcome.error}")
+            if outcome.hint:
+                st.info(outcome.hint)
+            if st.button("Choisir un autre ZIP", key="retry_manual_update"):
+                del st.session_state["manual_update_outcome"]
+                st.rerun()
+            return
+
+        st.success("Mise à jour hors ligne appliquée.")
+        if outcome.hint:
+            st.info(outcome.hint)
+        if outcome.requirements_changed:
+            st.warning(
+                "Les dépendances ont changé : fermer cette application et relancer `run_app` "
+                "(.bat/.command). Elles seront réinstallées automatiquement."
+            )
+        else:
+            st.warning(
+                "Fermer cette application et relancer `run_app` (.bat/.command) pour charger "
+                "la nouvelle version."
+            )
 
 
 @st.cache_data(ttl=DATA_FRESHNESS_CACHE_TTL_SECONDS, show_spinner=False)

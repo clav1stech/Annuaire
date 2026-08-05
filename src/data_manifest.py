@@ -77,7 +77,9 @@ class CategoryFreshness:
 
     @property
     def needs_download(self) -> bool:
-        return self.status != DATA_STATUS_UP_TO_DATE
+        # Un fichier installé manuellement est une source locale volontaire : sa version
+        # est inconnue, mais cela ne doit pas en faire un téléchargement obligatoire.
+        return self.status in {DATA_STATUS_ABSENT, DATA_STATUS_OUTDATED}
 
 
 @dataclass(frozen=True)
@@ -96,8 +98,14 @@ class DataFreshnessStatus:
         return tuple(item for item in self.categories if item.needs_download)
 
     @property
+    def manual(self) -> tuple[CategoryFreshness, ...]:
+        return tuple(item for item in self.categories if item.status == DATA_STATUS_UNKNOWN)
+
+    @property
     def up_to_date(self) -> bool:
-        return self.check_ok and not self.stale
+        return self.check_ok and bool(self.categories) and all(
+            item.status == DATA_STATUS_UP_TO_DATE for item in self.categories
+        )
 
     @property
     def total_download_mo(self) -> float:

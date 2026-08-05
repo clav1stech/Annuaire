@@ -364,7 +364,11 @@ class TestFreshnessComparison:
         verdict = status.categories[0]
         assert verdict.status == DATA_STATUS_UNKNOWN
         assert verdict.local_path == "StockEtablissement_utf8.parquet"
-        assert verdict.needs_download is True
+        assert verdict.needs_download is False
+        assert status.stale == ()
+        assert status.manual == (verdict,)
+        assert status.up_to_date is False
+        assert status.total_download_mo == 0
 
     def test_manual_file_size_matching_remote_is_a_hint_not_a_confirmation(self, tmp_path):
         local_file = tmp_path / "StockEtablissement_utf8.parquet"

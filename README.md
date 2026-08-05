@@ -17,7 +17,7 @@ Toutes les étapes, dans l'ordre, avec leur fréquence et un lien direct vers la
 | 5 | *(uniquement en téléchargement manuel)* **Placer ces fichiers Parquet dans le dossier du projet** | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
 | 6 | Lancer l'application (`run_app`) — installe l'environnement au premier lancement | À chaque usage | [Lancement](#lancement-à-chaque-usage) |
 | 7 | Charger son fichier et exécuter le contrôle | À chaque usage | [Exemple d'usage](#exemple-dusage) |
-| 8 | Mettre à jour le code si une nouvelle version est signalée (bouton dans l'interface, ou `update_project`) | Occasionnel | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
+| 8 | Mettre à jour le code si une nouvelle version est signalée (bouton, ZIP GitHub hors ligne, ou `update_project`) | Occasionnel | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
 
 En cas de blocage ou pour savoir ce que l'outil couvre exactement, voir aussi : [FAQ et limites du projet](#faq-et-limites-du-projet).
 
@@ -194,7 +194,19 @@ Le compte rendu s'affiche directement dans la page. Comme l'application en cours
 
 Si la mise à jour ne peut pas être appliquée (par exemple des modifications locales non commitées sur un projet cloné avec `git`), la page l'indique avec la marche à suivre, et rien n'est modifié.
 
-### 3. Appliquer la mise à jour en ligne de commande
+### 3. Appliquer une mise à jour hors ligne avec le ZIP GitHub
+
+Si le réseau d'entreprise bloque GitHub depuis le poste qui exécute l'application, l'encadré **« Mise à jour hors ligne depuis un ZIP GitHub »** reste disponible en haut de l'interface, même lorsque la vérification automatique de version échoue :
+
+1. depuis un poste ayant accès à GitHub, ouvrir la branche `main` du projet et choisir **Code → Download ZIP** ;
+2. transférer ce fichier `.zip` sur le poste de l'application ;
+3. glisser-déposer le ZIP dans l'encadré, puis cliquer sur **« Appliquer la mise à jour hors ligne »**.
+
+Avant toute copie, l'application vérifie que l'archive correspond bien au projet Annuaire, que son fichier `VERSION` est valide et plus récent que la version installée, et qu'aucun chemin ne peut sortir du dossier du projet. Elle applique ensuite exactement les mêmes exclusions que la mise à jour automatique : les Parquet SIRENE, `.git`, l'environnement virtuel, les caches et `export/` sont préservés. Parmi les fichiers de code, seuls ceux dont le contenu diffère sont remplacés ; les fichiers locaux absents de l'archive ne sont pas supprimés.
+
+Après le succès, fermer l'application et relancer `run_app`, comme pour une mise à jour en ligne. Le ZIP est seulement lu pendant l'opération : il n'est pas conservé dans le projet.
+
+### 4. Appliquer la mise à jour en ligne de commande
 
 Alternative à l'interface, notamment si l'application ne démarre plus. Lancer le script dédié, comme pour l'installation ou le lancement :
 
@@ -232,8 +244,9 @@ Dès l'ouverture de la page, **avant même de charger un fichier à contrôler**
 | Pastille | État | Signification |
 |---|---|---|
 | ✅ | à jour | le fichier local correspond à la dernière publication Insee |
-| 🔄 | obsolète | une publication plus récente existe (ou le fichier a été installé à la main, voir plus bas) |
+| 🔄 | obsolète | une publication plus récente existe |
 | ⬇️ | absent | aucun fichier local pour cette catégorie |
+| ❔ | version inconnue | fichier installé manuellement, utilisable sans mise à jour obligatoire |
 
 Si au moins un fichier est à récupérer, un bouton **« Mettre à jour les données SIRENE »** affiche le volume total et lance le téléchargement des fichiers concernés, l'un après l'autre, avec barre de progression et compteur en Mo. Les fichiers déjà à jour sont ignorés — inutile donc de tout retélécharger chaque mois : en pratique, seuls les fichiers réellement republiés sont repris.
 
@@ -242,11 +255,11 @@ Points à connaître :
 - **Aucun déplacement manuel ensuite.** Les fichiers sont écrits directement dans le dossier du projet, sous les noms attendus par la détection automatique, et les champs de chemin de l'étape 4 se remplissent tout seuls.
 - **Une interruption ne casse rien.** L'écriture se fait dans un fichier temporaire et ne remplace l'ancien qu'une fois le transfert terminé : une coupure réseau ne laisse jamais un Parquet tronqué à la place d'un fichier valide. Il suffit de recliquer sur le bouton.
 - **Prévoir le temps et la place.** Le premier téléchargement représente environ 3,5 à 4 Go pour les 4 fichiers, soit plusieurs minutes selon la connexion.
-- **Comment l'application sait où elle en est.** La version téléchargée est mémorisée dans un fichier `.sirene_manifest.json` (local, non versionné, à côté de `app.py`). Le supprimer n'a d'autre effet que de faire réapparaître les fichiers comme « obsolète — version inconnue » au lancement suivant.
+- **Comment l'application sait où elle en est.** La version téléchargée est mémorisée dans un fichier `.sirene_manifest.json` (local, non versionné, à côté de `app.py`). Le supprimer n'a d'autre effet que de faire réapparaître les fichiers comme « version inconnue » au lancement suivant ; ils restent utilisables sans téléchargement.
 - **Hors connexion, rien ne bloque.** Si data.gouv.fr est injoignable, l'encadré l'indique simplement et les fichiers déjà présents restent parfaitement utilisables.
 - **Dossier synchronisé (OneDrive & co).** Une synchronisation cloud ou un antivirus peut garder un fichier ouvert au moment où l'application le remplace, ce qui provoque un *« Accès refusé »*. L'application réessaie automatiquement, et si le verrou persiste elle l'annonce sans perdre le fichier téléchargé. Voir l'avertissement de l'[Installation](#installation-une-seule-fois) : le mieux reste d'installer le projet hors dossier synchronisé.
 
-> **Fichiers installés à la main :** ils sont détectés et utilisables immédiatement, mais l'application ne peut pas deviner de quel millésime ils datent — elle les affiche donc en 🔄 *obsolète (version inconnue)*, même s'ils sont tout frais. Ce n'est pas une erreur. Pour repartir sur un état net, un clic sur le bouton les remplace par la publication courante et enregistre leur version ; ils passeront alors en ✅.
+> **Fichiers installés à la main :** ils sont détectés et utilisables immédiatement, mais l'application ne peut pas deviner de quel millésime ils datent — elle les affiche donc en ❔ *version inconnue*, même s'ils sont tout frais. Ce n'est ni une erreur ni une obligation de les remplacer : l'utilisateur peut poursuivre directement avec ces fichiers. Seuls les fichiers réellement absents ou connus comme obsolètes sont proposés au téléchargement automatique.
 
 ### Téléchargement manuel (repli)
 

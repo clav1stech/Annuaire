@@ -114,6 +114,14 @@ DATA_STATUS_UNKNOWN = "version inconnue"
 
 DATA_FRESHNESS_CACHE_TTL_SECONDS = 3600
 
+# --- Mise à jour du code par archive ---------------------------------------
+
+# Le dépôt tient largement dans cette enveloppe. Ces deux limites empêchent qu'un fichier
+# déposé dans l'interface monopolise la mémoire ou se révèle être une archive décompressée
+# démesurée, sans ajouter de dépendance au mécanisme de mise à jour.
+UPDATE_ARCHIVE_MAX_UPLOAD_MO = 50
+UPDATE_ARCHIVE_MAX_UNCOMPRESSED_BYTES = 200 * 1024 * 1024
+
 # --- Téléchargement ---------------------------------------------------------
 
 # Les fichiers SIRENE pèsent jusqu'à plusieurs gigaoctets : des blocs larges limitent

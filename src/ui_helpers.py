@@ -161,8 +161,19 @@ def render_sirene_data_panel(status: DataFreshnessStatus) -> bool:
             size_col.markdown(f":gray[{format_size_mo(item.remote_size_mo)}]")
             status_col.markdown(f":{color}[{item.status}]")
 
+        if status.manual:
+            labels = ", ".join(item.label for item in status.manual)
+            st.info(
+                f"Fichier(s) installé(s) manuellement et prêt(s) à l'emploi : {labels}. "
+                "Leur millésime ne peut pas être vérifié, mais aucune mise à jour n'est "
+                "obligatoire pour poursuivre."
+            )
+
         if status.up_to_date:
             st.caption("Tous les fichiers correspondent à la dernière publication.")
+            return False
+
+        if not status.stale:
             return False
 
         st.caption(

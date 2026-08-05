@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.10 - 2026-08-05
+- Fichiers SIRENE installés manuellement utilisables sans mise à jour obligatoire ; ajout d'une mise à jour hors ligne du code par glisser-déposer du ZIP GitHub, avec validation de l'archive et remplacement des seuls fichiers nécessaires.
+
 ## 1.1.9 - 2026-08-05
 - Écriture des fichiers tolérante aux dossiers synchronisés : le remplacement d'un fichier téléchargé ou du manifeste de version est réessayé quand la destination est momentanément verrouillée (OneDrive, antivirus), au lieu d'échouer immédiatement sur une traceback « Accès refusé » après plusieurs centaines de Mo transférés ; si le verrou persiste, l'application affiche un message explicite et conserve le fichier téléchargé ainsi que le manifeste précédent. Le README recommande désormais d'installer le projet hors dossier synchronisé (OneDrive/Dropbox/Google Drive), y compris quand Bureau et Documents y sont redirigés par l'entreprise.
 
