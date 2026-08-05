@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.4 - 2026-08-05
+- Remplacement recommandé : la chaîne de succession est suivie jusqu'à un SIRET exploitable (successeur fermé ignoré, reprise en cascade sur plusieurs niveaux, garde anti-cycle et limite de profondeur) au lieu de s'arrêter au premier successeur.
+
 ## 1.1.3 - 2026-07-29
 - Ajout du n° de TVA intracommunautaire calculé (à partir du SIREN) dans les feuilles de sortie de l'export Excel.
 

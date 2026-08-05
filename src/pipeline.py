@@ -20,6 +20,7 @@ from .config import (
     SIRET_STATUS_INVALID,
     SIRET_STATUS_NOT_FOUND,
     SIRET_STATUS_RADIATED,
+    SUCCESSION_MAX_CHAIN_DEPTH,
     UNITE_LEGALE_CANONICAL_FIELDS,
 )
 from .sirene_queries import SireneQueryService, SireneSources
@@ -341,6 +342,114 @@ def _choose_active_sibling_candidate(
     return str(chosen.get("siret", "") or "").strip(), count, reason
 
 
+def _succession_map_from_links(succession_links: pd.DataFrame | None) -> dict[str, str]:
+    """Build a predecessor -> successor mapping from raw succession links."""
+    if succession_links is None or succession_links.empty:
+        return {}
+    required_cols = {"siret_predecessor", "siret_successor"}
+    if not required_cols.issubset(set(succession_links.columns)):
+        return {}
+    rows = succession_links.dropna(subset=["siret_predecessor", "siret_successor"])
+    rows = rows.drop_duplicates(subset=["siret_predecessor"], keep="first")
+    return dict(
+        zip(rows["siret_predecessor"].astype(str), rows["siret_successor"].astype(str))
+    )
+
+
+def _status_by_siret(etablissements: pd.DataFrame | None) -> dict[str, str]:
+    """Map SIRET to its raw administrative state, ignoring rows without SIRET."""
+    if etablissements is None or etablissements.empty:
+        return {}
+    if not {"siret", "etatAdministratifEtablissement"}.issubset(set(etablissements.columns)):
+        return {}
+    sirets = etablissements["siret"].fillna("").astype(str).str.strip()
+    states = etablissements["etatAdministratifEtablissement"].fillna("").astype(str).str.strip()
+    return {siret: state for siret, state in zip(sirets, states) if siret}
+
+
+def _resolve_active_successor(
+    siret: str,
+    *,
+    succession_map: dict[str, str],
+    status_by_siret: dict[str, str],
+    max_depth: int = SUCCESSION_MAX_CHAIN_DEPTH,
+) -> str:
+    """Follow the succession chain until an exploitable successor is reached.
+
+    SIRENE enchaine les reprises : s'arreter au premier successeur peut recommander un
+    etablissement lui-meme ferme. Un statut inconnu (SIRET absent du stock charge) est
+    accepte car rien ne permet de l'ecarter. Le parcours est borne en profondeur et
+    memorise les SIRET visites, les liens pouvant former un cycle.
+    """
+    current = str(siret or "").strip()
+    if not current:
+        return ""
+    visited = {current}
+    for _ in range(max(int(max_depth), 0)):
+        successor = str(succession_map.get(current, "") or "").strip()
+        if not successor or successor in visited:
+            return ""
+        state = str(status_by_siret.get(successor, "") or "").strip().upper()
+        if state in ("", "A"):
+            return successor
+        visited.add(successor)
+        current = successor
+    return ""
+
+
+def _normalize_succession_links(succession_links: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Normalize SIRET columns of succession links to their 14-digit form."""
+    if succession_links is None or succession_links.empty:
+        return succession_links
+    normalized = succession_links.copy()
+    for column in ("siret_predecessor", "siret_successor"):
+        if column in normalized.columns:
+            normalized[column] = normalized[column].map(lambda x: _normalize_identifier(x, 14))
+    return normalized
+
+
+def _expand_succession_chain(
+    *,
+    service: SireneQueryService,
+    succession_links: pd.DataFrame | None,
+    status_by_siret: dict[str, str],
+    max_depth: int = SUCCESSION_MAX_CHAIN_DEPTH,
+) -> tuple[dict[str, str], dict[str, str]]:
+    """Load the succession levels beyond the first one.
+
+    Liens et etablissements ne sont charges que pour les SIRET d'entree : sans ces
+    requetes supplementaires, une reprise en cascade resterait invisible. Un SIRET
+    interroge sans resultat est memorise avec un statut vide pour borner la boucle.
+    """
+    chain_map = _succession_map_from_links(succession_links)
+    statuses = dict(status_by_siret)
+    if not chain_map:
+        return chain_map, statuses
+
+    frontier = {siret for siret in chain_map.values() if siret and siret not in statuses}
+    for _ in range(max(int(max_depth), 0)):
+        if not frontier:
+            break
+        successor_etab, _, _ = service.fetch_establishments_by_sirets(frontier)
+        successor_etab = _normalize_id_columns(successor_etab)
+        fetched_statuses = _status_by_siret(successor_etab)
+        for siret in frontier:
+            statuses[siret] = fetched_statuses.get(siret, "")
+        closed_successors = [
+            siret
+            for siret in frontier
+            if str(statuses.get(siret, "") or "").strip().upper() not in ("", "A")
+        ]
+        if not closed_successors:
+            break
+        deeper_links, _, _ = service.fetch_succession_links(closed_successors)
+        deeper_map = _succession_map_from_links(_normalize_succession_links(deeper_links))
+        for predecessor, successor in deeper_map.items():
+            chain_map.setdefault(predecessor, successor)
+        frontier = {siret for siret in chain_map.values() if siret and siret not in statuses}
+    return chain_map, statuses
+
+
 def _classify_cleaning_action(row: pd.Series) -> str:
     """Return a single business action label for third-party cleanup."""
     status = str(row.get("siret_status", "") or "")
@@ -444,7 +553,8 @@ def _build_siret_overview(
     input_columns: list[str],
     siret_source_column: str,
     all_etablissements: pd.DataFrame,
-    succession_links: pd.DataFrame | None,
+    succession_map: dict[str, str] | None,
+    succession_status_by_siret: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Build a single output table optimized for third-party data cleanup."""
     overview = controle_siret.copy()
@@ -479,18 +589,8 @@ def _build_siret_overview(
     )
 
     active_sibling_candidates = _build_active_sibling_candidates_by_siren(all_etablissements)
-    succession_map: dict[str, str] = {}
-    if succession_links is not None and not succession_links.empty:
-        required_cols = {"siret_predecessor", "siret_successor"}
-        if required_cols.issubset(set(succession_links.columns)):
-            succession_rows = succession_links.dropna(subset=["siret_predecessor", "siret_successor"])
-            succession_rows = succession_rows.drop_duplicates(subset=["siret_predecessor"], keep="first")
-            succession_map = dict(
-                zip(
-                    succession_rows["siret_predecessor"].astype(str),
-                    succession_rows["siret_successor"].astype(str),
-                )
-            )
+    resolved_succession_map = dict(succession_map or {})
+    resolved_succession_status = dict(succession_status_by_siret or {})
 
     def suggest_active_sibling(row: pd.Series) -> tuple[str, int, str]:
         siren = str(row.get("siren", "") or "").strip()
@@ -502,7 +602,11 @@ def _build_siret_overview(
         )
 
     overview["_tmp_replacement_from_succession"] = overview["siret_normalise"].map(
-        lambda s: succession_map.get(str(s), "")
+        lambda s: _resolve_active_successor(
+            str(s),
+            succession_map=resolved_succession_map,
+            status_by_siret=resolved_succession_status,
+        )
     )
     active_sibling_details = overview.apply(suggest_active_sibling, axis=1, result_type="expand")
     active_sibling_details.columns = [
@@ -1237,6 +1341,8 @@ def run_siret_control_pipeline(
         )
 
         succession_df: pd.DataFrame | None = None
+        succession_chain_map: dict[str, str] = {}
+        succession_status_by_siret: dict[str, str] = {}
         if sources.stocketablissementlienssuccession:
             if progress_callback:
                 progress_callback(
@@ -1252,14 +1358,12 @@ def run_siret_control_pipeline(
                 "resolved_columns": succession_map,
             }
             if succession_df is not None and not succession_df.empty:
-                if "siret_predecessor" in succession_df.columns:
-                    succession_df["siret_predecessor"] = succession_df["siret_predecessor"].map(
-                        lambda x: _normalize_identifier(x, 14)
-                    )
-                if "siret_successor" in succession_df.columns:
-                    succession_df["siret_successor"] = succession_df["siret_successor"].map(
-                        lambda x: _normalize_identifier(x, 14)
-                    )
+                succession_df = _normalize_succession_links(succession_df)
+                succession_chain_map, succession_status_by_siret = _expand_succession_chain(
+                    service=service,
+                    succession_links=succession_df,
+                    status_by_siret=_status_by_siret(all_etab_df),
+                )
             else:
                 warnings.append(
                     "Succession file provided but no matching links were found for input SIRET values."
@@ -1424,7 +1528,8 @@ def run_siret_control_pipeline(
         input_columns=output_input_columns_ordered,
         siret_source_column=siret_column,
         all_etablissements=all_etab_df if not all_etab_df.empty else pd.DataFrame(),
-        succession_links=succession_df if succession_df is not None and not succession_df.empty else None,
+        succession_map=succession_chain_map,
+        succession_status_by_siret=succession_status_by_siret,
     )
     controle = controle.drop(
         columns=[

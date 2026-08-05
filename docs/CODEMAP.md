@@ -18,6 +18,7 @@
 - Tests `pytest` des fonctions pures (validation SIRET/SIREN, statut, nommage des sorties). Socle de non-régression.
 - `test_data_manifest.py` — client data.gouv.fr, manifeste local et téléchargement, avec HTTP simulé (jamais d'appel réseau réel).
 - `test_sirene_schema.py` — résolution des colonnes, dont la coexistence des nomenclatures NAF rév. 2 / NAF 2025.
+- `test_pipeline_succession.py` — chaîne de succession et choix du SIRET de remplacement (cascade, cycle, repli sur un établissement actif du même SIREN), avec service SIRENE simulé (aucun Parquet lu).
 
 ## .github/
 - `workflows/ci.yml` — CI (lint `ruff` + `pytest` sur Python 3.11 à 3.14, typage `mypy` sur une version).

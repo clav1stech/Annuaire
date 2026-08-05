@@ -116,6 +116,11 @@ SIRET_STATUS_CLOSED = "CLOSED"
 SIRET_STATUS_RADIATED = "RADIATED"
 SIRET_STATUS_FOUND_UNKNOWN = "FOUND_UNKNOWN_STATUS"
 
+# Chaîne de succession SIRENE : un successeur peut lui-même avoir été repris, et les
+# liens peuvent former un cycle. La profondeur maximale borne le parcours tout en
+# couvrant largement les cascades réelles.
+SUCCESSION_MAX_CHAIN_DEPTH = 5
+
 SIRET_STATUS_ORDER = [
     SIRET_STATUS_INVALID,
     SIRET_STATUS_NOT_FOUND,
