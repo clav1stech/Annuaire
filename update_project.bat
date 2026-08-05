@@ -17,7 +17,7 @@ if exist "%VENV_DIR%\Scripts\python.exe" (
 
 if not defined PYTHON_EXE (
     echo [ERROR] No working Python interpreter found.
-    echo [HINT] Run create_venv.bat first, or install Python 3.11-3.14 ^(see README^).
+    echo [HINT] Run run_app.bat first ^(it installs the environment^), or install Python 3.11-3.14 ^(see README^).
     pause
     exit /b 1
 )

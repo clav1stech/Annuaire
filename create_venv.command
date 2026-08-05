@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Création de l'environnement virtuel et installation des dépendances (macOS / Linux).
 # Équivalent de create_venv.bat pour les postes non-Windows.
+# Appelé automatiquement par run_app.command au premier lancement : en usage direct, ce script
+# ne sert plus qu'à réinstaller ou réparer un environnement existant.
 # Extension .command : double-clic dans le Finder l'ouvre directement dans Terminal.app.
 set -euo pipefail
 

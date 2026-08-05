@@ -12,16 +12,16 @@ Toutes les étapes, dans l'ordre, avec leur fréquence et un lien direct vers la
 |---|---|---|---|
 | 1 | Installer Python | Une fois | [Installer Python](#installer-python-si-nécessaire) |
 | 2 | Télécharger le projet et le décompresser | Une fois | [Installation](#installation-une-seule-fois) |
-| 3 | Lancer le script d'installation (`create_venv`) | Une fois | [Installation](#installation-une-seule-fois) |
+| 3 | *(rien à faire : l'environnement est installé par `run_app` au premier lancement)* | Une fois | [Installation](#installation-une-seule-fois) |
 | 4 | Télécharger les fichiers SIRENE (Parquet) — bouton **« Mettre à jour les données SIRENE »** en haut de l'interface | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
 | 5 | *(uniquement en téléchargement manuel)* **Placer ces fichiers Parquet dans le dossier du projet** | Mensuel | [Fichiers SIRENE attendus](#fichiers-sirene-attendus) |
-| 6 | Lancer l'application (`run_app`) | À chaque usage | [Lancement](#lancement-à-chaque-usage) |
+| 6 | Lancer l'application (`run_app`) — installe l'environnement au premier lancement | À chaque usage | [Lancement](#lancement-à-chaque-usage) |
 | 7 | Charger son fichier et exécuter le contrôle | À chaque usage | [Exemple d'usage](#exemple-dusage) |
 | 8 | Mettre à jour le code si une nouvelle version est signalée (bouton dans l'interface, ou `update_project`) | Occasionnel | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
 
 En cas de blocage ou pour savoir ce que l'outil couvre exactement, voir aussi : [FAQ et limites du projet](#faq-et-limites-du-projet).
 
-L'installation (étapes 1 à 3) n'est à refaire que si vous changez de poste ou réinstallez le projet. La mise à jour des fichiers SIRENE (étapes 4 et 5) n'a aucun rapport avec le code : c'est un simple téléchargement/dépôt de fichiers, à refaire régulièrement pour ne pas travailler sur des données obsolètes. Le lancement (étapes 6 et 7) est la seule action répétée à chaque contrôle. La mise à jour du code (étape 8) n'est nécessaire que lorsque le projet évolue sur GitHub.
+L'installation (étapes 1 à 3) se résume à décompresser le projet puis à lancer `run_app` une première fois, qui met en place l'environnement Python tout seul. La mise à jour des fichiers SIRENE (étapes 4 et 5) n'a aucun rapport avec le code : c'est un simple téléchargement/dépôt de fichiers, à refaire régulièrement pour ne pas travailler sur des données obsolètes. Le lancement (étapes 6 et 7) est la seule action répétée à chaque contrôle. La mise à jour du code (étape 8) n'est nécessaire que lorsque le projet évolue sur GitHub.
 
 ## Prérequis
 
@@ -31,15 +31,15 @@ L'installation (étapes 1 à 3) n'est à refaire que si vous changez de poste ou
 
 ### Utiliser un terminal (pour dépannage ou utilisation avancée)
 
-Les scripts d'installation et de lancement peuvent s'utiliser en double-cliquant dessus, sans jamais ouvrir de terminal manuellement :
+Les scripts du projet peuvent s'utiliser en double-cliquant dessus, sans jamais ouvrir de terminal manuellement — en usage normal, seul `run_app` est nécessaire :
 
-- **Windows** : double-clic sur `create_venv.bat` / `run_app.bat` ouvre directement une invite de commandes.
+- **Windows** : double-clic sur `run_app.bat` ouvre directement une invite de commandes.
 - **macOS** : les scripts sont au format `.command` (et non `.sh`) précisément pour qu'un double-clic dans le Finder les ouvre directement dans **Terminal.app**, sans configuration ni "Ouvrir avec" à modifier.
 
 Mais si un script affiche une erreur, il faut pouvoir l'exécuter "à la main" pour lire le message :
 
-- **Windows** : touche `Windows`, taper `PowerShell` ou `Invite de commandes`, ouvrir l'application. Se déplacer dans le dossier du projet avec `cd` (exemple : `cd C:\Users\VotreNom\Downloads\Annuaire_SIRENE`), puis lancer le script en tapant son nom (ex. `create_venv.bat`) et Entrée.
-- **macOS** : ouvrir **Terminal** (via Spotlight : `Cmd + Espace`, taper `Terminal`, Entrée). Se déplacer dans le dossier du projet avec `cd` (exemple : `cd ~/Downloads/Annuaire_SIRENE`) — astuce : taper `cd ` (avec l'espace) puis glisser-déposer le dossier depuis le Finder dans la fenêtre du Terminal complète automatiquement le chemin. Lancer ensuite le script avec `./create_venv.command`.
+- **Windows** : touche `Windows`, taper `PowerShell` ou `Invite de commandes`, ouvrir l'application. Se déplacer dans le dossier du projet avec `cd` (exemple : `cd C:\Users\VotreNom\Downloads\Annuaire_SIRENE`), puis lancer le script en tapant son nom (ex. `run_app.bat`) et Entrée.
+- **macOS** : ouvrir **Terminal** (via Spotlight : `Cmd + Espace`, taper `Terminal`, Entrée). Se déplacer dans le dossier du projet avec `cd` (exemple : `cd ~/Downloads/Annuaire_SIRENE`) — astuce : taper `cd ` (avec l'espace) puis glisser-déposer le dossier depuis le Finder dans la fenêtre du Terminal complète automatiquement le chemin. Lancer ensuite le script avec `./run_app.command`.
 
 Ces terminaux restent ouverts pendant que l'application tourne ; les fermer arrête l'application.
 
@@ -65,7 +65,7 @@ Si le terminal répond `zsh: permission denied: ./run_app.command`, c'est que le
 chmod +x create_venv.command run_app.command update_project.command
 ```
 
-Les scripts peuvent ensuite être relancés normalement (`./run_app.command` ou double-clic).
+Les scripts peuvent ensuite être relancés normalement (`./run_app.command` ou double-clic). En pratique, seul `run_app.command` a besoin de ce bit exécutable : c'est le seul à lancer, et il appelle les autres d'une façon qui n'en dépend pas.
 
 ### Installer Python (si nécessaire)
 
@@ -87,7 +87,18 @@ Une fois l'installation terminée, fermer et rouvrir le terminal, puis revérifi
 ## Installation (une seule fois)
 
 1. Télécharger le code du projet (zip) et le décompresser dans un dossier facile à retrouver (ex. Documents, Bureau).
-2. Lancer le script d'installation adapté à votre système : double-clic dessus dans l'explorateur de fichiers, ou depuis un terminal ouvert dans le dossier du projet.
+2. Lancer `run_app` (voir [Lancement](#lancement-à-chaque-usage)) : **il n'y a pas de script d'installation séparé à lancer**. Au premier démarrage, `run_app` constate qu'aucun environnement n'existe et l'installe lui-même avant d'ouvrir l'application :
+
+```
+[INFO] Premiere utilisation : installation de l'environnement en cours.
+[INFO] Cela peut prendre quelques minutes ; ne pas fermer cette fenetre.
+```
+
+Cette étape prend quelques minutes (téléchargement des bibliothèques Python) et ne se reproduit plus ensuite : les lancements suivants démarrent directement.
+
+### Réinstaller ou réparer l'environnement (`create_venv`)
+
+Le script `create_venv` reste disponible pour reconstruire l'environnement à la main, par exemple si l'installation automatique a échoué et que vous voulez relire le détail des messages, ou après avoir supprimé le dossier `.venv_annuaire_sirene` :
 
 **Windows :**
 
@@ -101,7 +112,7 @@ create_venv.bat
 ./create_venv.command
 ```
 
-Ces scripts font la même chose :
+C'est exactement ce que `run_app` exécute au premier lancement :
 - affichent la version de Python détectée et avertissent si elle est hors de la plage testée (3.11-3.14), en demandant confirmation avant de continuer,
 - créent `.venv_annuaire_sirene` si nécessaire,
 - installent/upgradent `pip`,
@@ -110,7 +121,7 @@ Ces scripts font la même chose :
 
 > macOS : si `python3` n'est pas installé, utiliser [python.org](https://www.python.org/downloads/) (voir [Installer Python](#installer-python-si-nécessaire) ci-dessus). Le bouton **Browse...** de sélection de fichier repose sur Tkinter (inclus avec les installeurs python.org ; avec Homebrew, si utilisé à la place : `brew install python-tk@3.14`, en adaptant le numéro de version si besoin). En son absence, le chemin de sortie reste saisissable manuellement.
 
-Cette étape ne prend que quelques minutes et **n'est à refaire qu'une fois** (sauf changement de poste ou de dossier du projet). Le résultat est un dossier `.venv_annuaire_sirene` contenant tout ce dont l'application a besoin pour fonctionner ; il n'y a rien d'autre à installer par la suite.
+Le résultat est un dossier `.venv_annuaire_sirene` contenant tout ce dont l'application a besoin pour fonctionner ; il n'y a rien d'autre à installer par la suite.
 
 ## Lancement (à chaque usage)
 
@@ -128,9 +139,12 @@ run_app.bat
 
 > Le script est au format `.command` : un double-clic dans le Finder l'ouvre directement dans Terminal.app. Si un éditeur de code (VSCode, etc.) s'ouvre à la place, c'est probablement qu'une copie `run_app.sh` traîne encore dans le dossier — utiliser `run_app.command`, ou lancer manuellement depuis un terminal (voir [Utiliser un terminal](#utiliser-un-terminal-pour-dépannage-ou-utilisation-avancée)).
 
-L’interface Streamlit s’ouvre dans le navigateur. Ce script est celui à utiliser à chaque fois que vous voulez faire tourner un contrôle SIRET/SIREN — contrairement au script d'installation, qui ne sert qu'une fois.
+L’interface Streamlit s’ouvre dans le navigateur. **C'est le seul script à connaître** : il est à utiliser à chaque fois que vous voulez faire tourner un contrôle SIRET/SIREN, y compris la toute première fois (voir [Installation](#installation-une-seule-fois)).
 
-Avant d'ouvrir l'application, le script compare les dépendances déclarées dans `requirements.txt` à celles réellement installées dans `.venv_annuaire_sirene`. Si elles ont changé (typiquement après une mise à jour du code), les paquets sont réinstallés automatiquement — quelques dizaines de secondes de plus au lancement, sans aucune manipulation :
+Avant d'ouvrir l'application, le script se charge de tout ce qui doit être en place :
+- si l'environnement `.venv_annuaire_sirene` n'existe pas, il est créé et les bibliothèques installées (premier lancement, quelques minutes) ;
+- si une nouvelle version du code existe sur GitHub, un message le signale (voir [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet)) ;
+- si les dépendances déclarées dans `requirements.txt` ne correspondent plus à celles installées (typiquement après une mise à jour du code), les paquets sont réinstallés automatiquement — quelques dizaines de secondes de plus au lancement, sans aucune manipulation :
 
 ```
 [INFO] requirements.txt a changé depuis la dernière installation des dépendances.
@@ -379,6 +393,7 @@ Sommaire rapide de cette dernière partie :
 | Un fichier Parquet n'est pas détecté automatiquement | [Détection automatique des fichiers](#détection-automatique-des-fichiers-et-que-faire-si-elle-échoue) |
 | Une nouvelle version du code est disponible sur GitHub, comment l'appliquer | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
 | La page reste blanche, le terminal affiche des erreurs 500 | [La page reste blanche et le terminal enchaîne des erreurs 500](#la-page-reste-blanche-et-le-terminal-enchaîne-des-erreurs-500) |
+| L'installation automatique au premier lancement a échoué | [Réinstaller ou réparer l'environnement](#réinstaller-ou-réparer-lenvironnement-create_venv) |
 | Le remplaçant proposé pour un SIRET fermé semble peu fiable | [Impact de l'absence des fichiers optionnels](#fichiers-sirene-attendus) |
 | Je veux savoir ce que l'outil peut faire | [Ce que ça permet](#ce-que-ça-permet) |
 | Je veux savoir ce que l'outil ne fait pas (avant de m'en servir) | [Ce que ça ne permet pas](#ce-que-ça-ne-permet-pas) |

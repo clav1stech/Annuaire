@@ -1,4 +1,7 @@
 @echo off
+REM Creation de l'environnement virtuel et installation des dependances (Windows).
+REM Appele automatiquement par run_app.bat au premier lancement : en usage direct, ce script
+REM ne sert plus qu'a reinstaller ou reparer un environnement existant.
 setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 set "VENV_DIR=.venv_annuaire_sirene"

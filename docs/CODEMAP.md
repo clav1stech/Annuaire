@@ -11,8 +11,9 @@
 - `CONTRIBUTING.md` — flux de contribution (résumé, renvoie vers `docs/`).
 - `pyproject.toml` — métadonnées du package, dépendances (dont `[dev]`), config `pytest`/`ruff`/`mypy`.
 - `requirements.txt` — dépendances Python (utilisé par les scripts d'installation). `starlette` y est épinglé explicitement bien qu'il soit transitif : voir le commentaire du fichier et `tests/test_dependencies.py`.
-- `create_venv.command` / `run_app.command` — installation et lancement (macOS / Linux ; extension `.command` pour ouverture directe dans Terminal.app au double-clic).
-- `create_venv.bat` / `run_app.bat` — installation et lancement (Windows).
+- `run_app.command` / `run_app.bat` — **point d'entrée unique** pour l'utilisateur : crée l'environnement virtuel s'il est absent (en appelant `create_venv`), vérifie la version distante, resynchronise les dépendances (`scripts/sync_dependencies.py`), puis lance Streamlit.
+- `create_venv.command` / `create_venv.bat` — création de l'environnement et installation des dépendances : détection de l'interpréteur Python (alias Microsoft Store, Anaconda, plage 3.11-3.14). Appelé par `run_app` au premier lancement ; en usage direct, script de réinstallation/réparation.
+- Extension `.command` (macOS / Linux) pour une ouverture directe dans Terminal.app au double-clic ; `.bat` sous Windows. Les `.bat` restent en ASCII sans accents.
 
 ## tests/
 - Tests `pytest` des fonctions pures (validation SIRET/SIREN, statut, nommage des sorties). Socle de non-régression.

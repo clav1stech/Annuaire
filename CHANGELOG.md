@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.6 - 2026-08-05
+- `run_app` devient le seul script à lancer : il crée l'environnement virtuel au premier démarrage (plus besoin de lancer `create_venv` séparément) et répare un environnement incomplet avant d'ouvrir l'application.
+
 ## 1.1.5 - 2026-08-05
 - Correctif erreur 500 au lancement (starlette 1.4 incompatible avec le middleware gzip de Streamlit) : la version de starlette est désormais épinglée et un test de non-régression vérifie la compatibilité ; `run_app` réinstalle automatiquement les dépendances quand `requirements.txt` a changé, sans repasser par `create_venv`.
 
