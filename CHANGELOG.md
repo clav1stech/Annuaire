@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.8 - 2026-08-05
+- Remplaçant recommandé : quand un SIRET fermé porte plusieurs liens de succession, le lien retenu est désormais le plus récent (puis continuité économique, puis SIRET) au lieu du premier lu dans le fichier, choix jusqu'ici arbitraire qui pouvait désigner une reprise ancienne par une entreprise sans rapport ; nouvelle colonne `analysis_alerte_siren_different` (+ ligne de statistiques et mention dans la note d'analyse) signalant les remplaçants relevant d'un autre SIREN, et documentation des valeurs de `analysis_data_applied` (dont `NO_DATA_REPLACEMENT_NOT_LOADED` = donnée absente du lot chargé, pas remplacement invalide).
+
 ## 1.1.7 - 2026-08-05
 - Clé de contrôle SIRET de La Poste : les SIRET du SIREN 356000000 sont désormais reconnus valides quand la somme de leurs 14 chiffres est un multiple de 5 (règle INSEE propre à ce SIREN), en plus de la clé de Luhn ; ils étaient jusqu'ici classés `INVALID_SIRET_FORMAT` à tort.
 

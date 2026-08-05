@@ -345,13 +345,26 @@ def build_column_dictionary_sheet(siret_overview: pd.DataFrame) -> pd.DataFrame:
             "Synthese du resultat remplacement pour les SIRET fermes: "
             "Succession, Autre SIRET meme SIREN, ou Aucun. Vide sinon."
         ),
+        "analysis_alerte_siren_different": (
+            "Oui si le remplaçant recommandé relève d'un autre SIREN que l'identifiant d'entrée "
+            "(cession/apport d'établissement à une autre entreprise): le lien est courant et "
+            "légitime dans SIRENE mais change d'entité juridique, à vérifier avant reprise. "
+            "Non si le remplaçant porte le même SIREN. Vide s'il n'y a pas de remplaçant."
+        ),
         "analysis_nd_detecte": (
             "Oui si au moins une valeur contient le marqueur [ND] (ou [ ND ]), "
             "souvent utilisé quand certaines données ne sont pas diffusées."
         ),
         "analysis_priority": "Niveau de priorité de traitement (Basse/Moyenne/Haute).",
         "analysis_status_note": "Commentaire d'analyse synthétique de la situation.",
-        "analysis_data_applied": "Précise quelles données sont affichées (entrée ou remplaçant).",
+        "analysis_data_applied": (
+            "Précise quelles données sont affichées: INPUT_SIRET_DATA (celles de l'identifiant "
+            "d'entrée), REPLACEMENT_SIRET_DATA (celles du remplaçant), "
+            "NO_DATA_REPLACEMENT_NOT_LOADED (un remplaçant est recommandé mais son établissement "
+            "n'est pas dans le lot SIRENE chargé, le plus souvent parce qu'il relève d'un autre "
+            "SIREN: donnée absente, pas remplacement invalide), NO_DATA_CLOSED_NO_REPLACEMENT "
+            "(SIRET fermé sans remplaçant)."
+        ),
         "siret_retenu": (
             "SIRET retenu après traitement. "
             "Pour un SIRET actif : identifiant tel que confirmé par SIRENE "
@@ -574,6 +587,17 @@ def build_statistics_sheet(
             & synthese.ne("")
             & ~(synthese.eq("succession") | synthese.eq("autre siret meme siren") | synthese.eq("aucun"))
         ).sum()
+    )
+
+    siren_alert = (
+        df.get("analysis_alerte_siren_different", pd.Series(index=df.index, dtype=str))
+        .fillna("")
+        .astype(str)
+        .map(_normalize_text)
+    )
+    closed_with_replacement_count = int((status_masks["closed"] & replacement.ne("")).sum())
+    closed_with_siren_alert_count = int(
+        (status_masks["closed"] & replacement.ne("") & siren_alert.eq("oui")).sum()
     )
 
     eligible_nd_mask = status_masks["active"] | (status_masks["closed"] & replacement.ne(""))
@@ -832,6 +856,18 @@ def build_statistics_sheet(
                 "SIRET fermés sans proposition de remplacement.",
             ),
             _stat_row("", "Total", status_closed_count, status_closed_count, "", include_ratio=False),
+            empty_row(),
+            _stat_row(
+                "Points de vigilance",
+                "Remplaçants sur un autre SIREN",
+                closed_with_siren_alert_count,
+                closed_with_replacement_count,
+                (
+                    "Population = SIRET fermés avec remplaçant. Le remplaçant relève d'une autre "
+                    "entreprise (cession/apport d'établissement) : lien légitime dans SIRENE mais "
+                    "changement d'entité juridique, à vérifier avant reprise."
+                ),
+            ),
             empty_row(),
             _stat_row(
                 "Disponibilité des données",

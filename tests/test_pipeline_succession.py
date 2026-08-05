@@ -28,15 +28,79 @@ def _links(pairs: list[tuple[str, str]]) -> pd.DataFrame:
     return pd.DataFrame(pairs, columns=["siret_predecessor", "siret_successor"])
 
 
+def _dated_links(rows: list[tuple[str, str, str, object]]) -> pd.DataFrame:
+    """Liens de succession complets (date + continuité économique), comme SIRENE les livre."""
+    return pd.DataFrame(
+        rows,
+        columns=[
+            "siret_predecessor",
+            "siret_successor",
+            "dateLienSuccession",
+            "continuiteEconomique",
+        ],
+    )
+
+
 class TestSuccessionMapFromLinks:
     def test_empty_or_missing_columns_yield_empty_map(self):
         assert _succession_map_from_links(None) == {}
         assert _succession_map_from_links(pd.DataFrame()) == {}
         assert _succession_map_from_links(pd.DataFrame({"autre": ["x"]})) == {}
 
-    def test_first_link_wins_per_predecessor(self):
-        links = _links([(SIRET_A, SIRET_B), (SIRET_A, SIRET_C)])
+    def test_lowest_successor_wins_without_date_column(self):
+        # Sans date ni continuité, le tri sur le SIRET successeur garde un résultat
+        # reproductible quel que soit l'ordre de lecture du Parquet.
+        links = _links([(SIRET_A, SIRET_C), (SIRET_A, SIRET_B)])
         assert _succession_map_from_links(links) == {SIRET_A: SIRET_B}
+
+    def test_most_recent_link_wins(self):
+        # Cas réel : deux reprises anciennes par d'autres entreprises, puis un transfert
+        # interne récent. C'est le mouvement le plus récent qui décrit la situation.
+        links = _dated_links(
+            [
+                (SIRET_A, SIRET_C, "1997-08-01", True),
+                (SIRET_A, SIRET_D, "2003-04-05", True),
+                (SIRET_A, SIRET_B, "2011-07-25", False),
+            ]
+        )
+        assert _succession_map_from_links(links) == {SIRET_A: SIRET_B}
+
+    def test_economic_continuity_breaks_a_date_tie(self):
+        links = _dated_links(
+            [
+                (SIRET_A, SIRET_B, "2011-07-25", False),
+                (SIRET_A, SIRET_C, "2011-07-25", True),
+            ]
+        )
+        assert _succession_map_from_links(links) == {SIRET_A: SIRET_C}
+
+    def test_missing_date_never_outranks_a_dated_link(self):
+        links = _dated_links(
+            [
+                (SIRET_A, SIRET_B, "", True),
+                (SIRET_A, SIRET_C, "1997-08-01", False),
+            ]
+        )
+        assert _succession_map_from_links(links) == {SIRET_A: SIRET_C}
+
+    def test_order_of_rows_does_not_change_the_result(self):
+        pairs = [
+            (SIRET_A, SIRET_C, "1997-08-01", True),
+            (SIRET_A, SIRET_B, "2011-07-25", False),
+        ]
+        assert _succession_map_from_links(_dated_links(pairs)) == _succession_map_from_links(
+            _dated_links(list(reversed(pairs)))
+        )
+
+    def test_duckdb_string_booleans_are_understood(self):
+        # DuckDB renvoie les colonnes SIRENE castées en VARCHAR : "true"/"false".
+        links = _dated_links(
+            [
+                (SIRET_A, SIRET_B, "2011-07-25", "false"),
+                (SIRET_A, SIRET_C, "2011-07-25", "true"),
+            ]
+        )
+        assert _succession_map_from_links(links) == {SIRET_A: SIRET_C}
 
 
 class TestStatusBySiret:
@@ -264,6 +328,66 @@ class TestBuildSiretOverviewReplacement:
         assert row["siret_remplacement_recommande"] == sibling
         assert row["analysis_synthese_remplacement"] == "Autre SIRET même SIREN"
         assert row["analysis_succession_disponible"] == "Non"
+
+    def test_replacement_on_another_siren_is_flagged(self):
+        # SIRET_B releve d'un autre SIREN : lien legitime dans SIRENE (cession
+        # d'etablissement) mais changement d'entite juridique, donc signale.
+        overview = _build_siret_overview(
+            controle_siret=_controle_frame(SIRET_A, SIRET_A[:9]),
+            input_columns=[],
+            siret_source_column="siret_input",
+            all_etablissements=pd.DataFrame(),
+            succession_map={SIRET_A: SIRET_B},
+            succession_status_by_siret={SIRET_B: "A"},
+        )
+        row = overview.iloc[0]
+        assert row["siret_remplacement_recommande"] == SIRET_B
+        assert row["analysis_alerte_siren_different"] == "Oui"
+        assert "autre SIREN" in row["analysis_status_note"]
+        # Le remplacant reste recommande : l'alerte informe, elle n'ecarte pas le lien.
+        assert row["siret_retenu"] == SIRET_B
+
+    def test_replacement_on_same_siren_is_not_flagged(self):
+        siren = SIRET_A[:9]
+        successor = f"{siren}00099"
+        overview = _build_siret_overview(
+            controle_siret=_controle_frame(SIRET_A, siren),
+            input_columns=[],
+            siret_source_column="siret_input",
+            all_etablissements=pd.DataFrame(),
+            succession_map={SIRET_A: successor},
+            succession_status_by_siret={successor: "A"},
+        )
+        row = overview.iloc[0]
+        assert row["analysis_alerte_siren_different"] == "Non"
+        assert "autre SIREN" not in row["analysis_status_note"]
+
+    def test_alert_is_empty_without_replacement(self):
+        overview = _build_siret_overview(
+            controle_siret=_controle_frame(SIRET_A, SIRET_A[:9]),
+            input_columns=[],
+            siret_source_column="siret_input",
+            all_etablissements=pd.DataFrame(),
+            succession_map={},
+            succession_status_by_siret={},
+        )
+        assert overview.iloc[0]["analysis_alerte_siren_different"] == ""
+
+    def test_alert_holds_when_replacement_data_is_not_loaded(self):
+        # NO_DATA_REPLACEMENT_NOT_LOADED : donnee du remplacant absente du lot charge.
+        # L'alerte se calcule sur les 9 premiers chiffres, donc reste disponible.
+        overview = _build_siret_overview(
+            controle_siret=_controle_frame(SIRET_A, SIRET_A[:9]),
+            input_columns=[],
+            siret_source_column="siret_input",
+            all_etablissements=pd.DataFrame(),
+            succession_map={SIRET_A: SIRET_B},
+            succession_status_by_siret={SIRET_B: "A"},
+        )
+        row = overview.iloc[0]
+        assert row["analysis_data_applied"] == "NO_DATA_REPLACEMENT_NOT_LOADED"
+        assert row["analysis_alerte_siren_different"] == "Oui"
+        assert row["siret_remplacement_recommande"] == SIRET_B
 
     def test_active_siret_keeps_no_replacement(self):
         controle = _controle_frame(SIRET_A, SIRET_A[:9])

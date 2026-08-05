@@ -339,6 +339,16 @@ Le classement d'une colonne dans une catégorie ne dépend que de son nom techni
 Marqueur de diffusion partielle:
 - `analysis_nd_detecte` indique `Oui` si un marqueur `[ND]` est détecté dans les données.
 
+Remplaçant relevant d'une autre entreprise:
+- `analysis_alerte_siren_different` indique `Oui` quand le remplaçant recommandé porte un SIREN différent de l'identifiant d'entrée, `Non` quand il porte le même, et reste vide s'il n'y a pas de remplaçant. Ce cas n'est **pas** une anomalie: dans la base SIRENE, 22 % des liens de succession pointent vers un établissement d'un autre SIREN (cession ou apport d'établissement à une autre entreprise). Il change en revanche d'entité juridique — donc de contrat, de RIB et de n° de TVA — et mérite une vérification manuelle avant reprise dans une base tiers. Les colonnes d'unité légale (dénomination, état, compteurs d'établissements) sont alors laissées vides plutôt que reprises de l'entreprise d'origine.
+- Quand plusieurs liens de succession existent pour un même SIRET fermé (cas fréquent: 368 000 SIRET dans le stock SIRENE), l'application retient le lien à la **date de succession la plus récente**, puis celui portant une continuité économique, puis le plus petit SIRET successeur. Le choix est donc reproductible d'une exécution à l'autre.
+
+Valeurs de `analysis_data_applied`:
+- `INPUT_SIRET_DATA` — les colonnes métier décrivent l'identifiant d'entrée.
+- `REPLACEMENT_SIRET_DATA` — elles décrivent le remplaçant recommandé.
+- `NO_DATA_REPLACEMENT_NOT_LOADED` — un remplaçant est recommandé, mais son établissement n'a pas été chargé dans le lot interrogé (le plus souvent parce qu'il relève d'un autre SIREN, hors du périmètre des SIREN d'entrée). C'est une **donnée absente du lot, pas un remplacement invalide**: le SIRET reste renseigné dans `siret_remplacement_recommande`, seules les colonnes métier sont vides.
+- `NO_DATA_CLOSED_NO_REPLACEMENT` — SIRET fermé sans remplaçant identifié.
+
 Lecture des stats "absents":
 - `SIRET en doublon dans le fichier d'entrée` = lignes où la clé normalisée apparaît au moins 2 fois dans les lignes analysées.
 - `Identifiants absents dans le fichier d'entrée` = lignes sans identifiant (vide ou 0).

@@ -343,17 +343,44 @@ def _choose_active_sibling_candidate(
 
 
 def _succession_map_from_links(succession_links: pd.DataFrame | None) -> dict[str, str]:
-    """Build a predecessor -> successor mapping from raw succession links."""
+    """Build a predecessor -> successor mapping from raw succession links.
+
+    Un prédécesseur porte souvent plusieurs liens (368 000 SIRET dans le stock SIRENE,
+    jusqu'à 175 liens pour un seul), dont les successeurs relèvent de SIREN différents
+    dans 69 % des cas : retenir le premier lien rencontré ferait dépendre le remplaçant
+    recommandé de l'ordre de lecture du Parquet, et pouvait désigner une reprise
+    ancienne par une entreprise sans rapport plutôt que le mouvement le plus récent.
+    Le tri est donc explicite : lien le plus récent d'abord, puis continuité économique,
+    puis SIRET successeur pour rester déterministe à égalité parfaite.
+    """
     if succession_links is None or succession_links.empty:
         return {}
     required_cols = {"siret_predecessor", "siret_successor"}
     if not required_cols.issubset(set(succession_links.columns)):
         return {}
-    rows = succession_links.dropna(subset=["siret_predecessor", "siret_successor"])
-    rows = rows.drop_duplicates(subset=["siret_predecessor"], keep="first")
-    return dict(
-        zip(rows["siret_predecessor"].astype(str), rows["siret_successor"].astype(str))
+    rows = succession_links.dropna(subset=["siret_predecessor", "siret_successor"]).copy()
+    if rows.empty:
+        return {}
+    # Dates SIRENE en ISO (AAAA-MM-JJ) : l'ordre lexicographique vaut l'ordre
+    # chronologique, et une date absente ("") passe en dernier en tri décroissant.
+    rows["_tmp_link_date"] = (
+        rows["dateLienSuccession"].fillna("").astype(str).str.strip()
+        if "dateLienSuccession" in rows.columns
+        else ""
     )
+    rows["_tmp_link_continuite"] = (
+        rows["continuiteEconomique"].map(_is_truthy_flag)
+        if "continuiteEconomique" in rows.columns
+        else False
+    )
+    rows["_tmp_link_successor"] = rows["siret_successor"].astype(str)
+    rows = rows.sort_values(
+        by=["_tmp_link_date", "_tmp_link_continuite", "_tmp_link_successor"],
+        ascending=[False, False, True],
+        kind="stable",
+    )
+    rows = rows.drop_duplicates(subset=["siret_predecessor"], keep="first")
+    return dict(zip(rows["siret_predecessor"].astype(str), rows["_tmp_link_successor"]))
 
 
 def _status_by_siret(etablissements: pd.DataFrame | None) -> dict[str, str]:
@@ -671,6 +698,28 @@ def _build_siret_overview(
         "_tmp_active_same_siren_choice_reason",
     ].fillna("").astype(str)
 
+    # Alerte SIREN différent : un lien de succession vers une autre entreprise est
+    # fréquent et légitime (22 % des liens du stock SIRENE : cession ou apport
+    # d'établissement), mais il change d'entité juridique et ne peut pas être appliqué
+    # en aveugle sur une base tiers. Le cas est donc signalé, jamais écarté. Comparaison
+    # sur les 9 premiers chiffres pour rester valable même quand la donnée du
+    # remplaçant n'a pas été chargée (cf. NO_DATA_REPLACEMENT_NOT_LOADED).
+    replacement_siren = (
+        overview["siret_remplacement_recommande"].fillna("").astype(str).str.slice(0, 9)
+    )
+    input_siren = overview["siret_normalise"].fillna("").astype(str).str.slice(0, 9)
+    with_replacement_mask = (
+        closed_mask & overview["siret_remplacement_recommande"].fillna("").astype(str).ne("")
+    )
+    siren_different_mask = (
+        with_replacement_mask & input_siren.ne("") & replacement_siren.ne(input_siren)
+    )
+    # Vide hors remplacement : il n'y a alors rien à comparer, ce qui se distingue d'un
+    # remplaçant vérifié comme portant le même SIREN.
+    overview["analysis_alerte_siren_different"] = ""
+    overview.loc[with_replacement_mask, "analysis_alerte_siren_different"] = "Non"
+    overview.loc[siren_different_mask, "analysis_alerte_siren_different"] = "Oui"
+
     overview["analysis_synthese_remplacement"] = ""
     overview.loc[succession_replacement_mask, "analysis_synthese_remplacement"] = "Succession"
     overview.loc[
@@ -714,6 +763,13 @@ def _build_siret_overview(
         )
         candidate_count = int(candidate_count_raw) if pd.notna(candidate_count_raw) else 0
         choice_reason = str(row.get("analysis_raison_choix_remplacement", "") or "").strip()
+        siren_alert = str(row.get("analysis_alerte_siren_different", "") or "").strip() == "Oui"
+        # Suffixe et non préfixe : l'alerte qualifie le remplaçant annoncé juste avant.
+        siren_alert_suffix = (
+            " Attention: le remplacant appartient a un autre SIREN, verifier le lien avant reprise."
+            if siren_alert
+            else ""
+        )
 
         fallback_prefix = ""
         if validation_route == "SIREN_FALLBACK_FROM_SIRET":
@@ -738,7 +794,8 @@ def _build_siret_overview(
             return f"{fallback_prefix}{siren_prefix}SIRET actif.".strip()
         if status == SIRET_STATUS_CLOSED and synthese == "Succession" and replacement:
             return (
-                f"{fallback_prefix}{siren_prefix}SIRET ferme, remplacement recommande: {replacement} (Succession)."
+                f"{fallback_prefix}{siren_prefix}SIRET ferme, remplacement recommande: {replacement} "
+                f"(Succession).{siren_alert_suffix}"
             ).strip()
         if status == SIRET_STATUS_CLOSED and synthese == "Autre SIRET même SIREN" and replacement:
             if candidate_count > 0:
@@ -746,12 +803,16 @@ def _build_siret_overview(
                     return (
                         f"{fallback_prefix}{siren_prefix}SIRET ferme, remplacement recommande: {replacement} "
                         f"(Autre SIRET même SIREN, {candidate_count} candidat(s)). {choice_reason}"
+                        f"{siren_alert_suffix}"
                     ).strip()
                 return (
                     f"{fallback_prefix}{siren_prefix}SIRET ferme, remplacement recommande: {replacement} "
-                    f"(Autre SIRET même SIREN, {candidate_count} candidat(s))."
+                    f"(Autre SIRET même SIREN, {candidate_count} candidat(s)).{siren_alert_suffix}"
                 ).strip()
-            return f"{fallback_prefix}{siren_prefix}SIRET ferme, remplacement recommande: {replacement}.".strip()
+            return (
+                f"{fallback_prefix}{siren_prefix}SIRET ferme, remplacement recommande: "
+                f"{replacement}.{siren_alert_suffix}"
+            ).strip()
         if status == SIRET_STATUS_CLOSED and synthese == "Aucun":
             return f"{fallback_prefix}{siren_prefix}SIRET ferme sans remplacant disponible.".strip()
         if status == SIRET_STATUS_CLOSED:
@@ -818,6 +879,7 @@ def _build_siret_overview(
             "analysis_nb_candidats_remplacement",
             "analysis_raison_choix_remplacement",
             "analysis_synthese_remplacement",
+            "analysis_alerte_siren_different",
             "analysis_historique_disponible",
             "analysis_nd_detecte",
             "analysis_priority",
@@ -912,6 +974,18 @@ def _apply_closed_row_data_policy(
     Apply business rule:
     - CLOSED + replacement found: apply replacement establishment data.
     - CLOSED + no replacement: clear business data columns.
+
+    Valeurs posées dans `analysis_data_applied` :
+    - `REPLACEMENT_SIRET_DATA` : les colonnes métier décrivent le remplaçant, pas le
+      SIRET d'entrée. Les champs d'unité légale sont vidés si le remplaçant relève d'un
+      autre SIREN, ceux de l'établissement d'entrée n'ayant plus cours.
+    - `NO_DATA_REPLACEMENT_NOT_LOADED` : un remplaçant est recommandé mais son
+      établissement n'est pas dans le lot chargé (il appartient le plus souvent à un
+      autre SIREN, hors périmètre des SIREN d'entrée interrogés). C'est une **donnée
+      absente du batch, pas un remplacement invalide** : le SIRET reste dans
+      `siret_remplacement_recommande`, seules les colonnes métier sont vidées faute de
+      source. La légitimité du lien se lit dans `analysis_alerte_siren_different`.
+    - `NO_DATA_CLOSED_NO_REPLACEMENT` : aucun remplaçant identifié.
     """
     if overview.empty:
         return overview
