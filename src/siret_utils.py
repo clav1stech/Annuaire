@@ -8,6 +8,8 @@ from typing import Any
 import pandas as pd
 
 from .config import (
+    LA_POSTE_SIREN,
+    LA_POSTE_SIRET_DIGIT_SUM_MODULUS,
     SIRET_STATUS_ACTIVE,
     SIRET_STATUS_CLOSED,
     SIRET_STATUS_FOUND_UNKNOWN,
@@ -43,12 +45,12 @@ def _resolve_lookup_identifier(digits: str) -> tuple[str, str, str, bool, bool]:
         return "", "", "INVALID", False, False
 
     siret_candidate = digits[:14]
-    siret_ok = len(siret_candidate) == 14 and is_luhn_valid(siret_candidate)
+    siret_ok = len(siret_candidate) == 14 and is_sirene_key_valid(siret_candidate)
     if siret_ok:
         return siret_candidate, "SIRET", "SIRET_OK", True, True
 
     siren_candidate = digits[:9]
-    siren_ok = len(siren_candidate) == 9 and is_luhn_valid(siren_candidate)
+    siren_ok = len(siren_candidate) == 9 and is_sirene_key_valid(siren_candidate)
     if siren_ok:
         route = "SIREN_DIRECT" if len(digits) == 9 else "SIREN_FALLBACK_FROM_SIRET"
         return siren_candidate, "SIREN", route, True, True
@@ -73,6 +75,35 @@ def is_luhn_valid(number: str) -> bool:
                 digit -= 9
         checksum += digit
     return checksum % 10 == 0
+
+
+def _is_la_poste_siret_valid(number: str) -> bool:
+    """
+    Validate a SIRET against La Poste's own key rule (digit sum multiple of 5).
+
+    La règle ne vaut que pour les SIRET du SIREN de La Poste : appliquée ailleurs elle
+    accepterait un identifiant erroné sur un cinquième des saisies.
+    """
+    if len(number) != 14 or not number.startswith(LA_POSTE_SIREN):
+        return False
+    digit_sum = sum(int(char) for char in number)
+    return digit_sum % LA_POSTE_SIRET_DIGIT_SUM_MODULUS == 0
+
+
+def is_sirene_key_valid(number: str) -> bool:
+    """
+    Validate a SIREN/SIRET check key, exceptions du répertoire SIRENE comprises.
+
+    Contrôle de référence pour le routage : la clé de Luhn, complétée par la règle
+    propre aux SIRET de La Poste. Les deux contrôles sont alternatifs et non exclusifs
+    (les établissements La Poste les plus anciens ne satisfont que Luhn).
+    """
+    if not number.isdigit():
+        return False
+    # Reject obvious placeholder identifiers (all zeros).
+    if set(number) == {"0"}:
+        return False
+    return is_luhn_valid(number) or _is_la_poste_siret_valid(number)
 
 
 def build_siret_validation_frame(siret_series: pd.Series) -> pd.DataFrame:

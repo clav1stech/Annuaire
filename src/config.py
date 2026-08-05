@@ -138,6 +138,17 @@ SIRET_STATUS_FOUND_UNKNOWN = "FOUND_UNKNOWN_STATUS"
 # couvrant largement les cascades réelles.
 SUCCESSION_MAX_CHAIN_DEPTH = 5
 
+# --- Exception SIRENE : La Poste --------------------------------------------
+
+# Le SIREN de La Poste satisfait la clé de Luhn (aucune exception nécessaire) mais ses
+# SIRET suivent une règle propre : la somme des 14 chiffres est un multiple de 5.
+# Contrôle mené sur les 13 121 établissements de ce SIREN présents dans
+# StockEtablissement : 13 080 respectent le multiple de 5, les 41 autres (les plus
+# anciens, créés avant 2008) échouent à cette règle mais satisfont Luhn. Les deux
+# contrôles sont donc alternatifs pour ce SIREN, et pour lui seul.
+LA_POSTE_SIREN = "356000000"
+LA_POSTE_SIRET_DIGIT_SUM_MODULUS = 5
+
 SIRET_STATUS_ORDER = [
     SIRET_STATUS_INVALID,
     SIRET_STATUS_NOT_FOUND,
