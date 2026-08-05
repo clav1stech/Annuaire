@@ -70,3 +70,4 @@ Chaîne données SIRENE, également transverse et à sens unique : `datagouv_cli
 - `CLAUDE.md` — règles transverses génériques (tout langage/projet).
 - `CONVENTIONS.md` — conventions de code transverses.
 - `CODEMAP.md` — ce fichier.
+- `SUCCESSION.md` — règle de choix du SIRET de remplacement (liens multiples, remplaçant sur un autre SIREN, valeurs de `analysis_data_applied`) et protocole de non-régression associé.

@@ -342,6 +342,7 @@ Marqueur de diffusion partielle:
 Remplaçant relevant d'une autre entreprise:
 - `analysis_alerte_siren_different` indique `Oui` quand le remplaçant recommandé porte un SIREN différent de l'identifiant d'entrée, `Non` quand il porte le même, et reste vide s'il n'y a pas de remplaçant. Ce cas n'est **pas** une anomalie: dans la base SIRENE, 22 % des liens de succession pointent vers un établissement d'un autre SIREN (cession ou apport d'établissement à une autre entreprise). Il change en revanche d'entité juridique — donc de contrat, de RIB et de n° de TVA — et mérite une vérification manuelle avant reprise dans une base tiers. Les colonnes d'unité légale (dénomination, état, compteurs d'établissements) sont alors laissées vides plutôt que reprises de l'entreprise d'origine.
 - Quand plusieurs liens de succession existent pour un même SIRET fermé (cas fréquent: 368 000 SIRET dans le stock SIRENE), l'application retient le lien à la **date de succession la plus récente**, puis celui portant une continuité économique, puis le plus petit SIRET successeur. Le choix est donc reproductible d'une exécution à l'autre.
+- Détail complet de ces règles, chiffres à l'appui et limite connue: [`docs/SUCCESSION.md`](docs/SUCCESSION.md).
 
 Valeurs de `analysis_data_applied`:
 - `INPUT_SIRET_DATA` — les colonnes métier décrivent l'identifiant d'entrée.
