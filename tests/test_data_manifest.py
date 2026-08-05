@@ -10,6 +10,7 @@ from io import BytesIO
 
 import pytest
 
+from src.atomic_io import AtomicWriteError
 from src.config import (
     DATA_STATUS_ABSENT,
     DATA_STATUS_OUTDATED,
@@ -227,6 +228,28 @@ class TestManifestPersistence:
 
     def test_save_leaves_no_temporary_file(self, tmp_path):
         save_manifest({}, tmp_path)
+        assert list(tmp_path.glob("*.tmp")) == []
+
+    def test_locked_manifest_fails_without_losing_previous_content(self, tmp_path, monkeypatch):
+        entry = ManifestEntry(
+            category="stocketablissement",
+            checksum="abc123",
+            filesize=42,
+            last_modified="2026-07-01T00:00:00+00:00",
+            local_path="etab.parquet",
+            downloaded_at="2026-07-02T10:00:00+00:00",
+        )
+        save_manifest({"stocketablissement": entry}, tmp_path)
+        monkeypatch.setattr("src.atomic_io.time.sleep", lambda _seconds: None)
+        monkeypatch.setattr(
+            "src.atomic_io.os.replace",
+            lambda _src, _dst: (_ for _ in ()).throw(PermissionError(5, "Accès refusé")),
+        )
+
+        with pytest.raises(AtomicWriteError):
+            save_manifest({}, tmp_path)
+
+        assert load_manifest(tmp_path)["stocketablissement"] == entry
         assert list(tmp_path.glob("*.tmp")) == []
 
     def test_record_download_preserves_other_categories(self, tmp_path):

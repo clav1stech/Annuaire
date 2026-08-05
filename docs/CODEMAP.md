@@ -20,6 +20,7 @@
 - `test_data_manifest.py` — client data.gouv.fr, manifeste local et téléchargement, avec HTTP simulé (jamais d'appel réseau réel).
 - `test_sirene_schema.py` — résolution des colonnes, dont la coexistence des nomenclatures NAF rév. 2 / NAF 2025.
 - `test_dependencies.py` — synchronisation des dépendances (pip simulé, aucune installation réelle) et garde-fou de compatibilité Streamlit/starlette.
+- `test_atomic_io.py` — remplacement atomique : verrou transitoire réessayé, verrou persistant signalé sans abîmer le fichier existant (`os.replace` et l'attente simulés).
 - `test_pipeline_succession.py` — chaîne de succession et choix du SIRET de remplacement (cascade, cycle, repli sur un établissement actif du même SIREN), avec service SIRENE simulé (aucun Parquet lu).
 
 ## .github/
@@ -43,6 +44,7 @@
 ## src/ (package `Annuaire_SIRENE`)
 - `__init__.py` — expose `APP_NAME`, `__version__`.
 - `config.py` — constantes applicatives, chemins par défaut des parquets SIRENE, listes de champs canoniques, lecture de `VERSION`. Tout réglage global vit ici.
+- `atomic_io.py` — remplacement « temporaire → fichier final » avec réessais (`replace_atomically`, `write_text_atomically`, `AtomicWriteError`). Transverse, ne dépend que de `config.py` : un dossier synchronisé ou un antivirus peut verrouiller brièvement la destination sous Windows.
 - `siret_utils.py` — normalisation et validation des SIRET/SIREN.
 - `sirene_schema.py` — résolution défensive des colonnes des tables SIRENE (alias).
 - `sirene_queries.py` — requêtes DuckDB sur les fichiers parquet SIRENE (couche accès données, pas de logique métier).
@@ -62,7 +64,7 @@
 
 ## Flux de dépendances (sens unique)
 `io_utils` / `sirene_queries` (accès données) → `pipeline` (métier) → `export_utils` / `ui_helpers` (présentation) → `app.py` (entrypoint).
-`config.py` et `siret_utils.py` / `sirene_schema.py` sont transverses, utilisables par toutes les couches.
+`config.py`, `atomic_io.py` et `siret_utils.py` / `sirene_schema.py` sont transverses, utilisables par toutes les couches.
 `version_check.py` / `updater.py` sont transverses eux aussi (`updater` dépend de `version_check`, jamais l'inverse).
 Chaîne données SIRENE, également transverse et à sens unique : `datagouv_client` / `download_utils` → `data_manifest` → `app.py`.
 

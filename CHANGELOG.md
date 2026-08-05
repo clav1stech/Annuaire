@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.9 - 2026-08-05
+- Écriture des fichiers tolérante aux dossiers synchronisés : le remplacement d'un fichier téléchargé ou du manifeste de version est réessayé quand la destination est momentanément verrouillée (OneDrive, antivirus), au lieu d'échouer immédiatement sur une traceback « Accès refusé » après plusieurs centaines de Mo transférés ; si le verrou persiste, l'application affiche un message explicite et conserve le fichier téléchargé ainsi que le manifeste précédent. Le README recommande désormais d'installer le projet hors dossier synchronisé (OneDrive/Dropbox/Google Drive), y compris quand Bureau et Documents y sont redirigés par l'entreprise.
+
 ## 1.1.8 - 2026-08-05
 - Remplaçant recommandé : quand un SIRET fermé porte plusieurs liens de succession, le lien retenu est désormais le plus récent (puis continuité économique, puis SIRET) au lieu du premier lu dans le fichier, choix jusqu'ici arbitraire qui pouvait désigner une reprise ancienne par une entreprise sans rapport ; nouvelle colonne `analysis_alerte_siren_different` (+ ligne de statistiques et mention dans la note d'analyse) signalant les remplaçants relevant d'un autre SIREN, et documentation des valeurs de `analysis_data_applied` (dont `NO_DATA_REPLACEMENT_NOT_LOADED` = donnée absente du lot chargé, pas remplacement invalide).
 

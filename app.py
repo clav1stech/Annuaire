@@ -21,6 +21,7 @@ from src.config import (
     SIRENE_CATEGORY_LABELS,
     build_default_output_path,
 )
+from src.atomic_io import AtomicWriteError
 from src.data_manifest import download_category, get_data_freshness_status
 from src.datagouv_client import DataGouvError, fetch_remote_resources
 from src.download_utils import DownloadError
@@ -144,6 +145,7 @@ def _download_sirene_data(categories: list[str]) -> None:
     progress_bar = st.progress(0, text="Préparation du téléchargement...")
     metrics_placeholder = st.empty()
     downloaded: list[str] = []
+    warnings: list[str] = []
     errors: list[str] = []
 
     for file_index, category in enumerate(categories, start=1):
@@ -184,10 +186,19 @@ def _download_sirene_data(categories: list[str]) -> None:
         try:
             download_category(resource, progress_callback=on_progress)
             downloaded.append(label)
+        except AtomicWriteError as exc:
+            # Le fichier est bien téléchargé et utilisable : seul le manifeste de version
+            # n'a pas pu être réécrit. La catégorie retombera sur « version inconnue ».
+            downloaded.append(label)
+            warnings.append(f"{label} : {exc}")
         except DownloadError as exc:
             errors.append(f"{label} : {exc}")
 
-    st.session_state["sirene_download_outcome"] = {"downloaded": downloaded, "errors": errors}
+    st.session_state["sirene_download_outcome"] = {
+        "downloaded": downloaded,
+        "warnings": warnings,
+        "errors": errors,
+    }
     _cached_data_freshness.clear()
     st.rerun()
 
@@ -196,9 +207,16 @@ def _render_sirene_data_status(detected_paths: dict[str, str]) -> None:
     """Fraîcheur des données SIRENE et mise à jour en un clic."""
     outcome = st.session_state.pop("sirene_download_outcome", None)
     if outcome is not None:
-        if outcome["downloaded"]:
-            st.success("Fichier(s) SIRENE mis à jour : " + ", ".join(outcome["downloaded"]) + ".")
-        for message in outcome["errors"]:
+        if outcome.get("downloaded"):
+            st.success(
+                "Fichier(s) SIRENE mis à jour : " + ", ".join(outcome["downloaded"]) + "."
+            )
+        for message in outcome.get("warnings", []):
+            st.warning(
+                f"Fichier téléchargé, mais sa version n'a pas pu être enregistrée — {message} "
+                "La donnée est utilisable ; elle restera affichée comme installée manuellement."
+            )
+        for message in outcome.get("errors", []):
             st.error(f"Téléchargement échoué — {message}")
 
     status = _cached_data_freshness(detected_paths)

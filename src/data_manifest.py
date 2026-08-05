@@ -7,7 +7,6 @@ de répondre à « mes fichiers sont-ils à jour ? » sans jamais ouvrir les Par
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,6 +25,7 @@ from .config import (
     SIRENE_MANIFEST_FILENAME,
     SIRENE_MANIFEST_VERSION,
 )
+from .atomic_io import write_text_atomically
 from .datagouv_client import DataGouvError, RemoteResource, fetch_remote_resources
 from .download_utils import ProgressCallback, download_with_progress
 
@@ -150,13 +150,10 @@ def save_manifest(entries: Mapping[str, ManifestEntry], root: str | Path | None 
         "manifest_version": SIRENE_MANIFEST_VERSION,
         "categories": {category: entry.to_dict() for category, entry in entries.items()},
     }
-    temp_path = path.with_name(path.name + ".tmp")
-    temp_path.write_text(
+    return write_text_atomically(
+        path,
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
-        encoding="utf-8",
     )
-    os.replace(temp_path, path)
-    return path
 
 
 def record_download(

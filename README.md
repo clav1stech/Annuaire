@@ -87,6 +87,11 @@ Une fois l'installation terminée, fermer et rouvrir le terminal, puis revérifi
 ## Installation (une seule fois)
 
 1. Télécharger le code du projet (zip) et le décompresser dans un dossier facile à retrouver (ex. Documents, Bureau).
+
+> ⚠️ **Choisir un dossier local, hors OneDrive / Dropbox / Google Drive.** Les fichiers SIRENE pèsent plusieurs gigaoctets : dans un dossier synchronisé, ils sont réenvoyés dans le cloud à chaque mise à jour mensuelle (quota et bande passante saturés), la synchronisation peut bloquer momentanément l'écriture des fichiers (message *« Accès refusé »* en fin de téléchargement), et l'option « fichiers à la demande » peut vider un Parquet du disque et faire échouer une analyse. Un dossier comme `C:\Annuaire_SIRENE` (Windows) ou `~/Annuaire_SIRENE` (macOS) évite tous ces cas.
+>
+> Attention : dans beaucoup d'entreprises, **Bureau et Documents sont automatiquement redirigés vers OneDrive** — vérifier le chemin affiché dans la barre d'adresse (s'il contient « OneDrive », le dossier est synchronisé). Si aucun emplacement non synchronisé n'est disponible, l'application reste utilisable : elle réessaie automatiquement quand un fichier est verrouillé, et signale clairement l'échec au lieu de s'interrompre. En cas de blocage persistant, mettre la synchronisation en pause le temps du téléchargement (clic sur l'icône OneDrive → *Suspendre la synchronisation*).
+
 2. Lancer `run_app` (voir [Lancement](#lancement-à-chaque-usage)) : **il n'y a pas de script d'installation séparé à lancer**. Au premier démarrage, `run_app` constate qu'aucun environnement n'existe et l'installe lui-même avant d'ouvrir l'application :
 
 ```
@@ -239,6 +244,7 @@ Points à connaître :
 - **Prévoir le temps et la place.** Le premier téléchargement représente environ 3,5 à 4 Go pour les 4 fichiers, soit plusieurs minutes selon la connexion.
 - **Comment l'application sait où elle en est.** La version téléchargée est mémorisée dans un fichier `.sirene_manifest.json` (local, non versionné, à côté de `app.py`). Le supprimer n'a d'autre effet que de faire réapparaître les fichiers comme « obsolète — version inconnue » au lancement suivant.
 - **Hors connexion, rien ne bloque.** Si data.gouv.fr est injoignable, l'encadré l'indique simplement et les fichiers déjà présents restent parfaitement utilisables.
+- **Dossier synchronisé (OneDrive & co).** Une synchronisation cloud ou un antivirus peut garder un fichier ouvert au moment où l'application le remplace, ce qui provoque un *« Accès refusé »*. L'application réessaie automatiquement, et si le verrou persiste elle l'annonce sans perdre le fichier téléchargé. Voir l'avertissement de l'[Installation](#installation-une-seule-fois) : le mieux reste d'installer le projet hors dossier synchronisé.
 
 > **Fichiers installés à la main :** ils sont détectés et utilisables immédiatement, mais l'application ne peut pas deviner de quel millésime ils datent — elle les affiche donc en 🔄 *obsolète (version inconnue)*, même s'ils sont tout frais. Ce n'est pas une erreur. Pour repartir sur un état net, un clic sur le bouton les remplace par la publication courante et enregistre leur version ; ils passeront alors en ✅.
 

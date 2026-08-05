@@ -123,6 +123,13 @@ DOWNLOAD_TIMEOUT_SECONDS = 60
 DOWNLOAD_TEMP_SUFFIX = ".part"
 BYTES_PER_MO = 1024 * 1024
 
+# Sous Windows, une synchronisation cloud (OneDrive) ou un antivirus garde brièvement le
+# fichier de destination ouvert juste après son écriture, ce qui fait échouer le
+# remplacement avec « Accès refusé ». Le verrou dure moins d'une seconde : quelques essais
+# espacés suffisent, sans jamais renoncer à l'écriture atomique.
+ATOMIC_REPLACE_MAX_ATTEMPTS = 5
+ATOMIC_REPLACE_RETRY_DELAY_SECONDS = 0.4
+
 REQUIRED_SHEETS = ["controle_siret", "all_etablissements", "move_candidates"]
 OPTIONAL_SHEETS = ["succession_links", "historique", "params_logs"]
 

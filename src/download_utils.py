@@ -12,6 +12,7 @@ import urllib.request
 from pathlib import Path
 from typing import Callable
 
+from .atomic_io import replace_atomically
 from .config import (
     BYTES_PER_MO,
     DATAGOUV_USER_AGENT,
@@ -100,7 +101,7 @@ def download_with_progress(
         if downloaded == 0:
             raise DownloadError("Téléchargement vide : aucune donnée reçue.")
 
-        os.replace(temp_path, target)
+        replace_atomically(temp_path, target)
     except urllib.error.HTTPError as exc:
         _discard(temp_path)
         raise DownloadError(f"Téléchargement refusé (HTTP {exc.code}) : {url}") from exc
