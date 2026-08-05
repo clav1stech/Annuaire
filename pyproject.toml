@@ -10,6 +10,11 @@ requires-python = ">=3.11"
 dynamic = ["version"]
 dependencies = [
     "streamlit>=1.40,<2",
+    # Dépendance transitive de Streamlit (serveur ASGI), épinglée explicitement : starlette
+    # 1.4.0 a rendu obligatoire l'argument `thread_minimum_size` de GZipResponder, que le
+    # middleware gzip de Streamlit (jusqu'à 1.61 inclus) ne passe pas — toute requête finit
+    # en erreur 500. Garde-fou de non-régression : tests/test_dependencies.py.
+    "starlette>=0.46,<1.4",
     "duckdb>=1.1,<2",
     "pandas>=2.1,<3",
     "openpyxl>=3.1,<4",

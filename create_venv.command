@@ -54,10 +54,9 @@ fi
 echo "[INFO] Mise à jour de pip..."
 "$VENV_DIR/bin/python" -m pip install --upgrade pip
 
+# Installation déléguée au script partagé : même commande pip que la resynchronisation
+# automatique de run_app, et enregistrement de l'empreinte des dépendances installées.
 echo "[INFO] Installation des dépendances depuis requirements.txt..."
-echo "[INFO] pyarrow et duckdb sont restreints aux wheels précompilées (pas de build source)..."
-"$VENV_DIR/bin/python" -m pip install \
-    --only-binary=pyarrow --only-binary=duckdb \
-    -r requirements.txt
+"$VENV_DIR/bin/python" scripts/sync_dependencies.py --force
 
 echo "[SUCCESS] Environnement prêt. Lancer l'application avec ./run_app.command"

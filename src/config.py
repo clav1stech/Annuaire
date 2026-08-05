@@ -32,6 +32,23 @@ DEFAULT_HISTORIQUE_PATH = "StockEtablissementHistorique_utf8.parquet"
 
 SUPPORTED_INPUT_EXTENSIONS = {".xlsx", ".csv", ".parquet"}
 
+# --- Environnement virtuel et dépendances ------------------------------------
+
+VENV_DIR_NAME = ".venv_annuaire_sirene"
+REQUIREMENTS_FILENAME = "requirements.txt"
+# Empreinte des dépendances réellement installées, écrite dans l'environnement virtuel :
+# elle suit donc l'environnement (jamais versionnée, préservée par les mises à jour de code)
+# et disparaît avec lui si l'utilisateur le supprime.
+REQUIREMENTS_STAMP_FILENAME = ".requirements_fingerprint"
+
+# pyarrow et duckdb ne sont installés qu'à partir de wheels précompilées : une compilation
+# depuis les sources échoue sur un poste bureautique sans chaîne de build.
+BINARY_ONLY_PACKAGES = ("pyarrow", "duckdb")
+
+# Installation complète depuis un cache pip vide sur une connexion lente : quelques minutes
+# suffisent largement, au-delà l'utilisateur attend devant une fenêtre figée.
+PIP_INSTALL_TIMEOUT_SECONDS = 900
+
 # --- Source distante des fichiers SIRENE (data.gouv.fr) ----------------------
 
 # Jeu de données officiel "Base Sirene des entreprises et de leurs établissements

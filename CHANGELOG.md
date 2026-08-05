@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.5 - 2026-08-05
+- Correctif erreur 500 au lancement (starlette 1.4 incompatible avec le middleware gzip de Streamlit) : la version de starlette est désormais épinglée et un test de non-régression vérifie la compatibilité ; `run_app` réinstalle automatiquement les dépendances quand `requirements.txt` a changé, sans repasser par `create_venv`.
+
 ## 1.1.4 - 2026-08-05
 - Remplacement recommandé : la chaîne de succession est suivie jusqu'à un SIRET exploitable (successeur fermé ignoré, reprise en cascade sur plusieurs niveaux, garde anti-cycle et limite de profondeur) au lieu de s'arrêter au premier successeur.
 

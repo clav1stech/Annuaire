@@ -81,7 +81,10 @@ def main() -> int:
     if outcome.hint:
         print(f"[HINT] {outcome.hint}")
     if outcome.requirements_changed:
-        print("[WARN] requirements.txt a changé : relancer create_venv (.bat/.command) avant de relancer l'application.")
+        print(
+            "[INFO] requirements.txt a changé : les paquets seront réinstallés automatiquement "
+            "au prochain lancement de run_app (.bat/.command)."
+        )
     else:
         print("[INFO] Dépendances inchangées : ./run_app.command (ou run_app.bat) peut être relancé directement.")
 

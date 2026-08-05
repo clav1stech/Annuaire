@@ -105,7 +105,8 @@ Ces scripts font la même chose :
 - affichent la version de Python détectée et avertissent si elle est hors de la plage testée (3.11-3.14), en demandant confirmation avant de continuer,
 - créent `.venv_annuaire_sirene` si nécessaire,
 - installent/upgradent `pip`,
-- installent les dépendances depuis `requirements.txt`, en forçant `pyarrow` et `duckdb` à utiliser uniquement des wheels précompilées (`--only-binary`) pour éviter une compilation depuis les sources.
+- installent les dépendances depuis `requirements.txt`, en forçant `pyarrow` et `duckdb` à utiliser uniquement des wheels précompilées (`--only-binary`) pour éviter une compilation depuis les sources,
+- enregistrent dans l'environnement virtuel une empreinte des dépendances installées, qui permet à `run_app` de détecter plus tard un décalage avec `requirements.txt` et de le corriger tout seul (voir [Lancement](#lancement-à-chaque-usage)).
 
 > macOS : si `python3` n'est pas installé, utiliser [python.org](https://www.python.org/downloads/) (voir [Installer Python](#installer-python-si-nécessaire) ci-dessus). Le bouton **Browse...** de sélection de fichier repose sur Tkinter (inclus avec les installeurs python.org ; avec Homebrew, si utilisé à la place : `brew install python-tk@3.14`, en adaptant le numéro de version si besoin). En son absence, le chemin de sortie reste saisissable manuellement.
 
@@ -128,6 +129,22 @@ run_app.bat
 > Le script est au format `.command` : un double-clic dans le Finder l'ouvre directement dans Terminal.app. Si un éditeur de code (VSCode, etc.) s'ouvre à la place, c'est probablement qu'une copie `run_app.sh` traîne encore dans le dossier — utiliser `run_app.command`, ou lancer manuellement depuis un terminal (voir [Utiliser un terminal](#utiliser-un-terminal-pour-dépannage-ou-utilisation-avancée)).
 
 L’interface Streamlit s’ouvre dans le navigateur. Ce script est celui à utiliser à chaque fois que vous voulez faire tourner un contrôle SIRET/SIREN — contrairement au script d'installation, qui ne sert qu'une fois.
+
+Avant d'ouvrir l'application, le script compare les dépendances déclarées dans `requirements.txt` à celles réellement installées dans `.venv_annuaire_sirene`. Si elles ont changé (typiquement après une mise à jour du code), les paquets sont réinstallés automatiquement — quelques dizaines de secondes de plus au lancement, sans aucune manipulation :
+
+```
+[INFO] requirements.txt a changé depuis la dernière installation des dépendances.
+[INFO] Installation des dépendances depuis requirements.txt...
+[SUCCESS] Environnement synchronisé avec requirements.txt.
+```
+
+Si cette réinstallation échoue (pas de connexion, wheel indisponible), le message d'erreur et la marche à suivre s'affichent, mais l'application est lancée quand même : en cas de dysfonctionnement, il reste possible de repasser par `create_venv`.
+
+### La page reste blanche et le terminal enchaîne des erreurs 500
+
+Symptôme typique : la page du navigateur ne se charge pas et le terminal répète `Exception in ASGI application` (par exemple `TypeError: GZipResponder.__init__() missing 1 required keyword-only argument: 'thread_minimum_size'`). L'environnement contient une version de dépendance incompatible avec celle attendue par Streamlit — situation possible sur un environnement installé avant la version 1.1.5.
+
+Correctif : fermer l'application, relancer `run_app` (la réinstallation décrite ci-dessus se déclenche d'elle-même). Si le problème persiste, relancer `create_venv`.
 
 ## Mettre à jour le code du projet
 
@@ -154,7 +171,7 @@ L'interface Streamlit affiche la même information en haut de page. Sans connexi
 
 Quand une nouvelle version est détectée, l'application affiche un bouton **« Mettre à jour maintenant »** sous le message d'alerte. Un clic applique la mise à jour, avec les mêmes garanties que le script en ligne de commande (voir ci-dessous) : rien n'est touché du côté des fichiers Parquet SIRENE, du dossier `export/` ni de l'environnement virtuel.
 
-Le compte rendu s'affiche directement dans la page. Comme l'application en cours d'exécution utilise toujours l'ancien code, **il faut la fermer et relancer `run_app`** pour que la nouvelle version soit chargée (et repasser par `create_venv` d'abord si le message signale un changement de dépendances).
+Le compte rendu s'affiche directement dans la page. Comme l'application en cours d'exécution utilise toujours l'ancien code, **il faut la fermer et relancer `run_app`** pour que la nouvelle version soit chargée. Si la mise à jour a changé les dépendances, `run_app` les réinstalle de lui-même au lancement suivant : il n'y a pas à repasser par `create_venv`.
 
 Si la mise à jour ne peut pas être appliquée (par exemple des modifications locales non commitées sur un projet cloné avec `git`), la page l'indique avec la marche à suivre, et rien n'est modifié.
 
@@ -183,7 +200,7 @@ Deux modes de mise à jour, choisis automatiquement selon la façon dont le proj
 - **Projet téléchargé en zip** (cas standard, voir [Installation](#installation-une-seule-fois)) : le script télécharge l'archive de la branche `main` sur GitHub et copie les fichiers mis à jour par-dessus le dossier du projet. Ce mode ne supprime pas d'anciens fichiers devenus obsolètes ; en cas de gros doute, un nouveau téléchargement zip complet reste la méthode la plus sûre.
 - **Projet cloné avec `git`** (utilisation avancée) : le script utilise `git fetch` puis `git pull --ff-only`. Si des modifications locales non commitées existent, la mise à jour est annulée par sécurité (message explicite) plutôt que de risquer de les écraser.
 
-Si `requirements.txt` a changé dans la mise à jour (nouvelle dépendance ou version), le script l'indique en fin d'exécution : il faut alors relancer `create_venv.bat` / `create_venv.command` avant de relancer l'application. Sinon, `run_app` peut être relancé directement.
+Si `requirements.txt` a changé dans la mise à jour (nouvelle dépendance ou version), le script l'indique en fin d'exécution : rien de plus à faire, `run_app` réinstalle les paquets concernés au lancement suivant. Pour forcer cette réinstallation sans passer par `run_app` (dépannage) : `python scripts/sync_dependencies.py --force` depuis le dossier du projet, environnement virtuel activé.
 
 ## Fichiers SIRENE attendus
 
@@ -361,6 +378,7 @@ Sommaire rapide de cette dernière partie :
 |---|---|
 | Un fichier Parquet n'est pas détecté automatiquement | [Détection automatique des fichiers](#détection-automatique-des-fichiers-et-que-faire-si-elle-échoue) |
 | Une nouvelle version du code est disponible sur GitHub, comment l'appliquer | [Mettre à jour le code du projet](#mettre-à-jour-le-code-du-projet) |
+| La page reste blanche, le terminal affiche des erreurs 500 | [La page reste blanche et le terminal enchaîne des erreurs 500](#la-page-reste-blanche-et-le-terminal-enchaîne-des-erreurs-500) |
 | Le remplaçant proposé pour un SIRET fermé semble peu fiable | [Impact de l'absence des fichiers optionnels](#fichiers-sirene-attendus) |
 | Je veux savoir ce que l'outil peut faire | [Ce que ça permet](#ce-que-ça-permet) |
 | Je veux savoir ce que l'outil ne fait pas (avant de m'en servir) | [Ce que ça ne permet pas](#ce-que-ça-ne-permet-pas) |

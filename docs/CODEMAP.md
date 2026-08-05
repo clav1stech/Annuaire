@@ -10,7 +10,7 @@
 - `LICENSE` — notice de propriété interne (logiciel non open source).
 - `CONTRIBUTING.md` — flux de contribution (résumé, renvoie vers `docs/`).
 - `pyproject.toml` — métadonnées du package, dépendances (dont `[dev]`), config `pytest`/`ruff`/`mypy`.
-- `requirements.txt` — dépendances Python (utilisé par les scripts d'installation).
+- `requirements.txt` — dépendances Python (utilisé par les scripts d'installation). `starlette` y est épinglé explicitement bien qu'il soit transitif : voir le commentaire du fichier et `tests/test_dependencies.py`.
 - `create_venv.command` / `run_app.command` — installation et lancement (macOS / Linux ; extension `.command` pour ouverture directe dans Terminal.app au double-clic).
 - `create_venv.bat` / `run_app.bat` — installation et lancement (Windows).
 
@@ -18,6 +18,7 @@
 - Tests `pytest` des fonctions pures (validation SIRET/SIREN, statut, nommage des sorties). Socle de non-régression.
 - `test_data_manifest.py` — client data.gouv.fr, manifeste local et téléchargement, avec HTTP simulé (jamais d'appel réseau réel).
 - `test_sirene_schema.py` — résolution des colonnes, dont la coexistence des nomenclatures NAF rév. 2 / NAF 2025.
+- `test_dependencies.py` — synchronisation des dépendances (pip simulé, aucune installation réelle) et garde-fou de compatibilité Streamlit/starlette.
 - `test_pipeline_succession.py` — chaîne de succession et choix du SIRET de remplacement (cascade, cycle, repli sur un établissement actif du même SIREN), avec service SIRENE simulé (aucun Parquet lu).
 
 ## .github/
@@ -32,6 +33,7 @@
 ## scripts/
 - `update_changelog.py` — insertion idempotente d'entrées dans `CHANGELOG.md`.
 - `update_project.py` — CLI de mise à jour : compare les versions puis délègue l'application à `src/updater.py`.
+- `sync_dependencies.py` — CLI de synchronisation de l'environnement virtuel avec `requirements.txt` (`--check-only`, `--force`) ; appelé par `run_app` avant le lancement et par `create_venv` à l'installation.
 - `export_project.py` — outil d'export du projet, voir § Export dans `docs/CLAUDE.md`. Trois profils exclusifs :
   `--ai` (défaut : code + doc structurante + manifeste), `--outline` (carte d'architecture sans corps de fonctions),
   `--backup` (zip restaurable avec rotation). Portée réductible via `--only chemins` ou `--preset <sous-module>`
@@ -49,6 +51,7 @@
 - `ui_helpers.py` — fonctions d'aide au rendu Streamlit.
 - `version_check.py` — comparaison version locale / `VERSION` distant sur GitHub (partagé UI + CLI).
 - `updater.py` — application d'une mise à jour (git ou zip), sans interaction ni sortie standard : renvoie un `UpdateOutcome`. Partagé entre `app.py` (bouton d'UI) et `scripts/update_project.py`.
+- `dependencies.py` — cohérence entre `requirements.txt` et les paquets installés : empreinte des dépendances enregistrée dans l'environnement virtuel, détection de désynchronisation, réinstallation pip. Transverse, sans sortie standard (`InstallOutcome`).
 - `datagouv_client.py` — métadonnées des ressources Parquet SIRENE sur l'API data.gouv.fr (lien permanent, checksum, taille, date de publication). N'ouvre jamais les Parquet.
 - `download_utils.py` — téléchargement en flux avec écriture atomique et rapport de progression. Transport pur, sans connaissance du manifeste ni de l'UI.
 - `data_manifest.py` — manifeste local `.sirene_manifest.json` (gitignoré) : versions téléchargées, comparaison avec le distant (`get_data_freshness_status`), orchestration téléchargement + enregistrement.

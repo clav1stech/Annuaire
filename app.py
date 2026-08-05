@@ -93,9 +93,13 @@ def _render_update_action() -> None:
     if outcome.hint:
         st.info(outcome.hint)
     if outcome.requirements_changed:
+        # La réinstallation n'est volontairement pas lancée ici : elle remplacerait les paquets
+        # de l'interpréteur qui fait tourner cette page, Streamlit compris. Elle est faite par
+        # `run_app` avant le démarrage suivant, quand plus rien ne tourne.
         st.warning(
-            "Les dépendances ont changé : fermer cette application, relancer `create_venv` "
-            "(.bat/.command), puis `run_app`."
+            "Les dépendances ont changé : fermer cette application et relancer `run_app` "
+            "(.bat/.command). Les paquets seront réinstallés automatiquement au lancement, "
+            "sans repasser par `create_venv`."
         )
     else:
         st.warning("Fermer cette application et relancer `run_app` (.bat/.command) pour charger la nouvelle version.")

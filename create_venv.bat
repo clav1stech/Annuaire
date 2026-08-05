@@ -110,14 +110,12 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM Installation deleguee au script partage : meme commande pip que la resynchronisation
+REM automatique de run_app, et enregistrement de l'empreinte des dependances installees.
 echo [INFO] Installing dependencies from requirements.txt...
-echo [INFO] pyarrow and duckdb are restricted to precompiled wheels ^(no source build^)...
-pip install --only-binary=pyarrow --only-binary=duckdb -r requirements.txt
+python scripts\sync_dependencies.py --force
 if errorlevel 1 (
     echo [ERROR] Failed to install dependencies.
-    echo [HINT] If the error mentions pyarrow or duckdb, no precompiled wheel is available
-    echo [HINT] for this Python version. Use Python 3.11-3.14, or check pypi.org for
-    echo [HINT] wheel availability before retrying.
     pause
     exit /b 1
 )
