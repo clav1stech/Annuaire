@@ -142,12 +142,13 @@ def _render_manual_update_action() -> None:
                 key="manual_update_zip",
                 max_upload_size=UPDATE_ARCHIVE_MAX_UPLOAD_MO,
             )
-            if st.button(
+            apply_update = st.button(
                 "Appliquer la mise à jour hors ligne",
                 type="primary",
                 disabled=archive is None,
                 key="apply_manual_update",
-            ):
+            )
+            if apply_update and archive is not None:
                 with st.spinner("Validation et mise à jour en cours..."):
                     st.session_state["manual_update_outcome"] = apply_update_from_zip(
                         archive.getvalue()
