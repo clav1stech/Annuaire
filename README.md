@@ -156,9 +156,11 @@ Informations à joindre :
 - le système d'exploitation et la version de Python (voir [Vérifier et installer Python](docs/DEPANNAGE.md#vérifier-et-installer-python))
 - les étapes suivies au moment du problème, et le résultat attendu
 - le message d'erreur complet, recopié depuis la page ou depuis la fenêtre noire de lancement. Copier le texte plutôt qu'une photo d'écran ; une capture de l'interface est utile en complément.
-- le millésime des fichiers SIRENE utilisés. Pour un problème de résultat, ajouter un **exemple de SIRET** concerné.
+- le millésime des fichiers SIRENE utilisés
 
-> ⚠️ Ne pas joindre de fichier client ni de données personnelles. Un ou deux identifiants SIRET suffisent à reproduire un cas, et ce sont des données publiques.
+> ⚠️ **Une issue GitHub est publique : aucune donnée client n'y a sa place.** Ni extrait de fichier, ni capture montrant des noms ou des adresses de tiers, ni identifiant SIRET repris d'un fichier de travail. Un SIRET est une donnée publique en soi, mais sa présence dans un signalement révèle une relation commerciale.
+>
+> Un problème de résultat se décrit donc sans exemple : le comportement observé, celui attendu, et le nombre de lignes concernées. Si le cas ne peut pas être compris sans les données, ne pas ouvrir d'issue et envoyer le tout par e-mail au développeur, sur son adresse professionnelle.
 
 ### Contribuer au code
 
