@@ -16,30 +16,28 @@ Application Streamlit locale qui contrôle une liste de SIRET/SIREN contre les f
 
 ## Contexte
 
-Nettoyer une base tiers (fournisseurs, clients) suppose de savoir quels SIRET sont encore actifs, lesquels sont fermés, et par quoi les remplacer. L'Insee publie ces données chaque mois, mais sous forme de fichiers de plusieurs gigaoctets, inexploitables sous Excel.
+Nettoyer une base tiers (fournisseurs, clients) suppose de savoir quels SIRET sont encore actifs, lesquels sont fermés, et par quoi les remplacer. L'Insee republie ces données chaque mois, en fichiers de plusieurs gigaoctets qu'Excel ne sait pas ouvrir.
 
-L'application fait ce travail en local : elle croise votre liste d'identifiants avec les fichiers SIRENE Parquet posés sur le poste, et produit un rapport Excel exploitable par un analyste. Aucun appel à une API Insee ou INPI — la fraîcheur du résultat dépend du millésime des fichiers fournis. Aucune compétence en programmation n'est requise.
+L'application croise une liste d'identifiants avec les fichiers SIRENE posés sur le poste et produit un rapport Excel. Tout se passe en local, sans appel à une API Insee ou INPI : la fraîcheur du résultat dépend du millésime des fichiers fournis. Son utilisation ne demande pas de savoir programmer.
 
-Le périmètre exact de l'outil est détaillé en fin de page : [Ce que l'outil permet](#ce-que-loutil-permet) et [Ce que l'outil ne permet pas](#ce-que-loutil-ne-permet-pas).
+Périmètre détaillé en fin de page : [Ce que l'outil permet](#ce-que-loutil-permet), [Ce que l'outil ne permet pas](#ce-que-loutil-ne-permet-pas).
 
 ## Démarrage rapide
 
-**Prérequis** : Windows 10/11 ou macOS (Linux fonctionne aussi), et Python 3.11 à 3.14. Si Python n'est pas installé, prendre l'installeur sur [python.org/downloads](https://www.python.org/downloads/) — sous Windows, cocher **« Add python.exe to PATH »** avant de lancer l'installation.
+**Prérequis** : Windows 10/11 ou macOS (Linux fonctionne aussi), Python 3.11 à 3.14. Si Python n'est pas installé, prendre l'installeur sur [python.org/downloads](https://www.python.org/downloads/). Sous Windows, cocher **« Add python.exe to PATH »** avant de lancer l'installation.
 
-1. **Décompresser le projet** dans un dossier local, **hors OneDrive / Dropbox / Google Drive** (ex. `C:\Annuaire_SIRENE`, `~/Annuaire_SIRENE`, ou le dossier Téléchargements qui convient très bien). Les fichiers SIRENE pèsent plusieurs Go et un dossier synchronisé provoque saturation de quota et erreurs d'écriture — voir [Dossier synchronisé](docs/DEPANNAGE.md#dossier-synchronisé-onedrive--co).
-2. **Lancer l'application** : double-clic sur `run_app.bat` (Windows) ou `run_app.command` (macOS/Linux). Au premier lancement, il installe lui-même l'environnement Python — quelques minutes, une seule fois :
+1. **Décompresser le projet** dans un dossier local, hors OneDrive / Dropbox / Google Drive. Les fichiers SIRENE pèsent plusieurs Go : dans un dossier synchronisé, ils saturent le quota et provoquent des erreurs d'écriture. Voir [Dossier synchronisé](docs/DEPANNAGE.md#dossier-synchronisé-onedrive--co).
+2. **Lancer l'application** : double-clic sur `run_app.bat` (Windows) ou `run_app.command` (macOS/Linux). Au premier lancement, il installe l'environnement Python, ce qui prend quelques minutes.
 
    ```
    [INFO] Premiere utilisation : installation de l'environnement en cours.
    [INFO] Cela peut prendre quelques minutes ; ne pas fermer cette fenetre.
    ```
 
-   > ⚠️ **Laisser cette fenêtre noire ouverte pendant toute la durée d'utilisation.** C'est elle qui fait tourner l'application : la fermer coupe l'application, même si l'onglet du navigateur reste affiché. La fermer est d'ailleurs la façon normale de quitter, une fois le travail terminé.
+   > ⚠️ **Laisser cette fenêtre noire ouverte pendant toute la durée d'utilisation.** C'est elle qui fait tourner l'application : la fermer coupe l'application, même si l'onglet du navigateur reste affiché. La fermer est aussi la façon de quitter en fin de travail.
 
-3. **Récupérer les fichiers SIRENE** : dans l'interface qui s'ouvre, cliquer sur **« Mettre à jour les données SIRENE »** (encadré « Données SIRENE », en haut de page). Compter 3,5 à 4 Go au premier téléchargement. À refaire environ une fois par mois.
-4. **Charger son fichier et exécuter le contrôle** (voir [Utilisation](#utilisation)).
-
-Les étapes 1 et 2 ne se font qu'une fois ; l'étape 3 est mensuelle ; l'étape 4 est la seule répétée à chaque contrôle.
+3. **Récupérer les fichiers SIRENE** : dans l'interface qui s'ouvre, cliquer sur **« Mettre à jour les données SIRENE »** (encadré « Données SIRENE », en haut de page). Compter 3,5 à 4 Go au premier téléchargement, à refaire environ une fois par mois.
+4. **Charger son fichier et exécuter le contrôle**, voir [Utilisation](#utilisation).
 
 ## Utilisation
 
@@ -49,25 +47,25 @@ Les étapes 1 et 2 ne se font qu'une fois ; l'étape 3 est mensuelle ; l'étape 
 2. Si le fichier est Excel, choisir la feuille ; indiquer s'il y a une ligne d'en-tête.
 3. Cocher les colonnes d'entrée à reprendre dans le rapport final.
 4. Sélectionner la colonne d'identifiants :
-   - privilégier une colonne **SIRET** plutôt que SIREN : un SIREN identifie l'entreprise, pas l'établissement, et l'application retombe alors sur le siège social (risque de faux doublons) ;
-   - une colonne **mixte SIRET/SIREN** est acceptée, mais elle existe rarement telle quelle dans un export : il faut généralement **la créer soi-même sous Excel** avant de charger le fichier. Avec le SIRET en colonne B et le SIREN en colonne C, ajouter une colonne avec `=IF(ISBLANK(B2), C2, B2)` (version française : `=SI(ESTVIDE(B2); C2; B2)`), la recopier vers le bas, puis sélectionner cette colonne dans l'application. Chaque valeur reconnue comme un SIREN sera traitée via le siège social ;
-   - option : inclure les lignes hors France si l'identifiant est valide (SIRET 14 ou SIREN 9, clé Luhn) ;
-   - si une colonne Pays est utilisée, les valeurs vides et `0` sont conservées comme « pays non précisé ». Le filtre Pays reste actif même si la colonne n'est pas exportée.
-5. Vérifier les chemins Parquet SIRENE (pré-remplis automatiquement, voir [Configuration](#configuration)).
-6. Choisir le chemin de sortie Excel : par défaut le dossier Téléchargements avec le nom du fichier d'entrée + horodatage, sinon saisie manuelle ou bouton **Browse...**.
+   - privilégier une colonne **SIRET** plutôt que SIREN. Un SIREN identifie l'entreprise, pas l'établissement : l'application retombe alors sur le siège social, ce qui peut créer de faux doublons.
+   - une colonne **mixte SIRET/SIREN** est acceptée. Elle existe rarement telle quelle dans un export, il faut donc la créer sous Excel avant de charger le fichier : avec le SIRET en colonne B et le SIREN en colonne C, ajouter une colonne `=IF(ISBLANK(B2), C2, B2)` (`=SI(ESTVIDE(B2); C2; B2)` en français) et la recopier vers le bas. Chaque valeur reconnue comme un SIREN passe par le siège social.
+   - option : inclure les lignes hors France si l'identifiant est valide (SIRET 14 ou SIREN 9, clé Luhn)
+   - les valeurs vides et `0` d'une colonne Pays sont conservées comme « pays non précisé ». Le filtre Pays reste actif même si la colonne n'est pas exportée.
+5. Vérifier les chemins Parquet SIRENE, pré-remplis automatiquement (voir [Configuration](#configuration)).
+6. Choisir le chemin de sortie Excel : par défaut le dossier Téléchargements avec le nom du fichier d'entrée et un horodatage, sinon saisie manuelle ou bouton **Browse...**.
 7. Cliquer sur **Exécuter le contrôle SIRET/SIREN**, puis suivre la barre de progression et les métriques d'avancement/succès/échecs.
 
-Le fichier Excel est enregistré à l'emplacement choisi, et l'interface propose en plus un **bouton de téléchargement** une fois le contrôle terminé. **Utiliser ce bouton** : c'est le moyen le plus sûr de récupérer le rapport là où on le veut, sans dépendre du chemin saisi ni avoir à retrouver le fichier sur le disque.
+Le fichier Excel est écrit à l'emplacement choisi, et l'interface propose en plus un **bouton de téléchargement** une fois le contrôle terminé. Passer par ce bouton évite d'avoir à retrouver le fichier sur le disque.
 
 ### Sortie Excel
 
 Cinq onglets sont produits :
 
-- `siret_overview` — tableau principal, une ligne par identifiant analysé ;
-- `statistiques` — synthèse (absents, invalides, fermés avec/sans remplaçant, radiés, actifs, `[ND]`) ;
-- `anomalies` — identifiants manquants, non trouvés ou invalides, avec leur motif ;
-- `siret_a_cloturer` — SIRET fermés sans remplaçant et SIRET radiés ;
-- `dictionnaire_colonnes` — description métier des colonnes.
+- `siret_overview` : tableau principal, une ligne par identifiant analysé
+- `statistiques` : synthèse (absents, invalides, fermés avec/sans remplaçant, radiés, actifs, `[ND]`)
+- `anomalies` : identifiants manquants, non trouvés ou invalides, avec leur motif
+- `siret_a_cloturer` : SIRET fermés sans remplaçant et SIRET radiés
+- `dictionnaire_colonnes` : description métier des colonnes
 
 Structure détaillée de `siret_overview` (catégories de colonnes, couleurs, valeurs de `analysis_data_applied`, statuts, lecture des statistiques) : [`docs/EXPORT_EXCEL.md`](docs/EXPORT_EXCEL.md).
 
@@ -79,9 +77,9 @@ Structure détaillée de `siret_overview` (catégories de colonnes, couleurs, va
 [INFO] Nouvelle version disponible : 1.0.3 -> 1.0.4
 ```
 
-Un bouton **« Mettre à jour maintenant »** applique la mise à jour. Vos fichiers Parquet SIRENE et le dossier `export/` ne sont jamais touchés : seuls les fichiers de l'application sont remplacés. Ensuite, **fermer l'application et relancer `run_app`** pour charger la nouvelle version — l'application en cours d'exécution utilise encore l'ancien code. Si la nouvelle version a besoin de nouvelles bibliothèques Python, `run_app` les installe automatiquement à ce redémarrage (quelques dizaines de secondes de plus, sans manipulation).
+Le bouton **« Mettre à jour maintenant »** applique la mise à jour. Les fichiers Parquet SIRENE et le dossier `export/` ne sont pas touchés : seuls les fichiers de l'application sont remplacés. Il faut ensuite **fermer l'application et relancer `run_app`** pour charger la nouvelle version, l'instance en cours d'exécution utilisant toujours l'ancien code. Si la nouvelle version a besoin de nouvelles bibliothèques Python, `run_app` les installe à ce redémarrage, ce qui rallonge le lancement de quelques dizaines de secondes.
 
-Si la bannière ne s'affiche pas ou si le bouton échoue, c'est en général le réseau de l'entreprise qui bloque les connexions de l'application — le site GitHub, lui, reste consultable depuis le navigateur du même poste. La mise à jour se fait alors en téléchargeant une archive ZIP depuis ce navigateur, puis en la déposant dans l'application : voir [Mise à jour hors ligne par ZIP GitHub](docs/DEPANNAGE.md#mise-à-jour-hors-ligne-par-zip-github).
+Si la bannière ne s'affiche pas ou si le bouton échoue, c'est en général le réseau de l'entreprise qui bloque les connexions de l'application ; le site GitHub, lui, reste consultable depuis le navigateur du même poste. La mise à jour se fait alors en téléchargeant une archive ZIP depuis ce navigateur, puis en la déposant dans l'application : voir [Mise à jour hors ligne par ZIP GitHub](docs/DEPANNAGE.md#mise-à-jour-hors-ligne-par-zip-github).
 
 > **Deux boutons voisins, à ne pas confondre :** « Mettre à jour maintenant » (bannière de version) met à jour **le code**, quelques centaines de Ko, et demande un redémarrage. « Mettre à jour les données SIRENE » télécharge **les fichiers Parquet**, plusieurs Go, sans redémarrage. Aucun des deux ne touche à ce que gère l'autre.
 
@@ -100,10 +98,10 @@ Ils doivent se trouver **dans le dossier du projet**, à côté de `app.py`.
 
 Fichier Parquet unique ou dossier Parquet en plusieurs morceaux : les deux sont acceptés. Total ≈ 3,5 à 4 Go.
 
-Sans les fichiers optionnels :
+Effet de l'absence des fichiers optionnels :
 
-- **sans `stocketablissementlienssuccession`** : pour un SIRET fermé, le remplaçant ne peut plus venir du lien officiel ; l'application retombe sur une règle de repli moins fiable (un autre établissement actif du même SIREN). La note d'analyse n'indique jamais « Succession » et le compteur « Fermés avec succession officielle » reste à 0 ;
-- **sans `stocketablissementhistorique`** : aucune adresse ni statut antérieur n'est disponible ; l'application ne peut pas confirmer un déménagement et se limite à l'état courant.
+- sans `stocketablissementlienssuccession`, le remplaçant d'un SIRET fermé ne peut plus venir du lien officiel. L'application applique une règle de repli moins fiable, un autre établissement actif du même SIREN. La note d'analyse n'indique plus « Succession » et le compteur « Fermés avec succession officielle » reste à 0.
+- sans `stocketablissementhistorique`, aucune adresse ni statut antérieur n'est disponible. L'application ne peut pas confirmer un déménagement et se limite à l'état courant.
 
 ### Téléchargement automatique (recommandé)
 
@@ -116,18 +114,18 @@ Dès l'ouverture de la page, l'application interroge data.gouv.fr et compare la 
 | ⬇️ | absent | aucun fichier local pour cette catégorie |
 | ❔ | version inconnue | millésime indéterminable, fichier utilisable sans mise à jour obligatoire |
 
-Le bouton **« Mettre à jour les données SIRENE »** affiche le volume total et télécharge uniquement les fichiers concernés, l'un après l'autre, avec barre de progression. À savoir :
+Le bouton **« Mettre à jour les données SIRENE »** affiche le volume total et télécharge uniquement les fichiers concernés, l'un après l'autre, avec barre de progression.
 
-- **aucun déplacement manuel ensuite** : les fichiers sont écrits dans le dossier du projet sous les noms attendus, et les champs de chemin se remplissent seuls ;
-- **un téléchargement qui échoue ne casse rien** : si la connexion est coupée, l'ordinateur mis en veille ou l'application fermée en cours de transfert, le fichier déjà en place reste intact et utilisable — le nouveau fichier n'est mis à sa place qu'une fois entièrement téléchargé. Il suffit de recliquer sur le bouton pour reprendre ;
-- **hors connexion, rien ne bloque** : si data.gouv.fr est injoignable, l'encadré le signale et les fichiers présents restent utilisables ;
-- **fichiers installés à la main** : ils sont détectés et utilisables immédiatement, mais l'application ne peut pas deviner leur millésime et les affiche en ❔. Ce n'est ni une erreur ni une obligation de les remplacer — voir [Un fichier s'affiche en version inconnue](docs/DEPANNAGE.md#un-fichier-saffiche-en-version-inconnue).
+- Les fichiers sont écrits dans le dossier du projet sous les noms attendus, et les champs de chemin se remplissent seuls. Aucun déplacement manuel ensuite.
+- **Un téléchargement qui échoue ne perd rien.** Connexion coupée, ordinateur mis en veille, application fermée en cours de transfert : le fichier déjà en place reste intact, le nouveau n'est mis à sa place qu'une fois entièrement téléchargé. Recliquer sur le bouton reprend l'opération.
+- Si data.gouv.fr est injoignable, l'encadré le signale et les fichiers présents restent utilisables.
+- Les fichiers installés à la main sont détectés et utilisables immédiatement, mais leur ancienneté est indéterminable : ils s'affichent en ❔. Voir [Un fichier s'affiche en version inconnue](docs/DEPANNAGE.md#un-fichier-saffiche-en-version-inconnue).
 
 ### Téléchargement manuel (repli)
 
-Les champs de chemin restent pleinement utilisables et sont la seule option dans plusieurs cas : fichiers stockés ailleurs (autre dossier, disque réseau ou externe), Parquet fourni sous forme de dossier de plusieurs morceaux, poste sans accès internet, ou millésime précis à conserver.
+Les champs de chemin restent utilisables et sont la seule option dans plusieurs cas : fichiers stockés ailleurs (autre dossier, disque réseau ou externe), Parquet fourni sous forme de dossier de plusieurs morceaux, poste sans accès internet, ou millésime précis à conserver.
 
-Source : [base SIRENE sur data.gouv.fr](https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret) — noms exacts des ressources à prendre et pièges à éviter : [Télécharger les fichiers SIRENE à la main](docs/DEPANNAGE.md#télécharger-les-fichiers-sirene-à-la-main).
+Source : [base SIRENE sur data.gouv.fr](https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret). Noms exacts des ressources à prendre et pièges à éviter : [Télécharger les fichiers SIRENE à la main](docs/DEPANNAGE.md#télécharger-les-fichiers-sirene-à-la-main).
 
 > ⚠️ **Déplacer ensuite les fichiers dans le dossier du projet** (celui de `app.py`). C'est ce qui permet leur détection automatique ; sinon les 4 chemins sont à saisir à la main à chaque utilisation.
 
@@ -150,17 +148,17 @@ Détail fichier par fichier : [`docs/CODEMAP.md`](docs/CODEMAP.md). Conventions 
 
 ### Signaler un bug ou demander une évolution
 
-Les demandes passent par les **issues GitHub** du dépôt : [github.com/clav1stech/Annuaire/issues](https://github.com/clav1stech/Annuaire/issues) → bouton **New issue**. Avant d'ouvrir une issue, vérifier que le cas n'est pas déjà traité dans [Dépannage et FAQ](docs/DEPANNAGE.md) ni dans une issue existante.
+Les demandes passent par les **issues GitHub** du dépôt : [github.com/clav1stech/Annuaire/issues](https://github.com/clav1stech/Annuaire/issues), bouton **New issue**. Vérifier au préalable que le cas n'est pas déjà traité dans [Dépannage et FAQ](docs/DEPANNAGE.md) ni dans une issue existante.
 
-Pour qu'une demande soit exploitable, joindre :
+Informations à joindre :
 
-- **la version de l'application** (contenu du fichier `VERSION`, affiché aussi en haut de l'interface) ;
-- **le système** : Windows ou macOS, et la version de Python (voir [Vérifier et installer Python](docs/DEPANNAGE.md#vérifier-et-installer-python)) ;
-- **ce qui était fait** au moment du problème, étape par étape, et ce qui était attendu ;
-- **le message d'erreur complet**, recopié depuis la page ou depuis la fenêtre noire de lancement (copier le texte plutôt qu'une photo d'écran ; une capture d'écran de l'interface est utile en complément) ;
-- **le millésime des fichiers SIRENE** utilisés, et pour un problème de résultat, un **exemple de SIRET** concerné.
+- la version de l'application, contenu du fichier `VERSION`, affichée aussi en haut de l'interface
+- le système d'exploitation et la version de Python (voir [Vérifier et installer Python](docs/DEPANNAGE.md#vérifier-et-installer-python))
+- les étapes suivies au moment du problème, et le résultat attendu
+- le message d'erreur complet, recopié depuis la page ou depuis la fenêtre noire de lancement. Copier le texte plutôt qu'une photo d'écran ; une capture de l'interface est utile en complément.
+- le millésime des fichiers SIRENE utilisés. Pour un problème de résultat, ajouter un **exemple de SIRET** concerné.
 
-> ⚠️ Ne jamais joindre de fichier client ou de données personnelles. Un ou deux identifiants SIRET suffisent à reproduire un cas ; ce sont des données publiques.
+> ⚠️ Ne pas joindre de fichier client ni de données personnelles. Un ou deux identifiants SIRET suffisent à reproduire un cas, et ce sont des données publiques.
 
 ### Contribuer au code
 
@@ -168,7 +166,7 @@ Flux de contribution, environnement de développement et règles à respecter : 
 
 ### Versions
 
-Historique des versions : [`CHANGELOG.md`](CHANGELOG.md) (mis à jour uniquement via `scripts/update_changelog.py`).
+Historique des versions : [`CHANGELOG.md`](CHANGELOG.md), mis à jour uniquement via `scripts/update_changelog.py`.
 
 ## Dépannage et FAQ
 
@@ -194,7 +192,7 @@ Les problèmes courants et leur solution sont regroupés dans un guide séparé 
 
 ## Ce que l'outil permet
 
-L'application **compare une liste d'identifiants avec la base SIRENE** pour produire des statistiques globales de qualité et **ramener les informations correspondantes** (établissement + unité légale) à côté de chaque identifiant. Elle ne va pas plus loin.
+L'application compare une liste d'identifiants avec la base SIRENE pour produire des statistiques globales de qualité et ramener les informations correspondantes (établissement et unité légale) à côté de chaque identifiant.
 
 - Contrôler en masse une liste de SIRET/SIREN par rapport à un millésime SIRENE local : existence, statut (actif/fermé/radié/non trouvé/invalide), adresse, dénomination, code NAF, date de création, etc.
 - Produire des statistiques globales de qualité de la base fournie (taux d'absents, d'invalides, de non-trouvés, de fermés avec ou sans remplaçant) pour prioriser un chantier de nettoyage.
