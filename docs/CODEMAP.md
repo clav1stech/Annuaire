@@ -72,4 +72,6 @@ Chaîne données SIRENE, également transverse et à sens unique : `datagouv_cli
 - `CLAUDE.md` — règles transverses génériques (tout langage/projet).
 - `CONVENTIONS.md` — conventions de code transverses.
 - `CODEMAP.md` — ce fichier.
+- `DEPANNAGE.md` — guide de dépannage utilisateur (terminal, scripts, cas macOS, mise à jour hors ligne, fichiers SIRENE). Destination de tout le contenu de dépannage sorti du `README.md`.
+- `EXPORT_EXCEL.md` — structure détaillée du rapport Excel (onglets, catégories de colonnes de `siret_overview`, valeurs de `analysis_data_applied`, statuts).
 - `SUCCESSION.md` — règle de choix du SIRET de remplacement (liens multiples, remplaçant sur un autre SIREN, valeurs de `analysis_data_applied`) et protocole de non-régression associé.
