@@ -148,7 +148,18 @@ Détail fichier par fichier : [`docs/CODEMAP.md`](docs/CODEMAP.md). Conventions 
 
 ### Signaler un bug ou demander une évolution
 
-Les demandes passent par les **issues GitHub** du dépôt : [github.com/clav1stech/Annuaire/issues](https://github.com/clav1stech/Annuaire/issues), bouton **New issue**. Vérifier au préalable que le cas n'est pas déjà traité dans [Dépannage et FAQ](docs/DEPANNAGE.md) ni dans une issue existante.
+Deux canaux, selon ce que contient le signalement :
+
+| Le signalement… | Où l'envoyer |
+|---|---|
+| ne contient que des informations techniques (message d'erreur, étapes, version) | **issue GitHub**, voir ci-dessous |
+| touche à des données client, même indirectement : extrait de fichier, capture montrant des tiers, SIRET repris d'un fichier de travail | **e-mail au développeur**, sur son adresse professionnelle. Pas d'issue. |
+
+En cas de doute, l'e-mail est le bon canal.
+
+### Ouvrir une issue
+
+Vérifier au préalable que le cas n'est pas déjà traité dans [Dépannage et FAQ](docs/DEPANNAGE.md) ni dans une issue existante, puis ouvrir une **New issue** sur [github.com/clav1stech/Annuaire/issues](https://github.com/clav1stech/Annuaire/issues).
 
 Informations à joindre :
 
@@ -158,9 +169,9 @@ Informations à joindre :
 - le message d'erreur complet, recopié depuis la page ou depuis la fenêtre noire de lancement. Copier le texte plutôt qu'une photo d'écran ; une capture de l'interface est utile en complément.
 - le millésime des fichiers SIRENE utilisés
 
-> ⚠️ **Une issue GitHub est publique : aucune donnée client n'y a sa place.** Ni extrait de fichier, ni capture montrant des noms ou des adresses de tiers, ni identifiant SIRET repris d'un fichier de travail. Un SIRET est une donnée publique en soi, mais sa présence dans un signalement révèle une relation commerciale.
+> ⚠️ **Une issue GitHub est publique.** Un SIRET est une donnée publique en soi, mais sa présence dans un signalement révèle une relation commerciale : il n'a donc pas sa place dans une issue s'il vient d'un fichier de travail.
 >
-> Un problème de résultat se décrit donc sans exemple : le comportement observé, celui attendu, et le nombre de lignes concernées. Si le cas ne peut pas être compris sans les données, ne pas ouvrir d'issue et envoyer le tout par e-mail au développeur, sur son adresse professionnelle.
+> Un problème de résultat se décrit sans exemple : le comportement observé, celui attendu, et le nombre de lignes concernées. Si le cas ne peut pas être compris sans les données, passer par l'e-mail.
 
 ### Contribuer au code
 
