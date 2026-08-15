@@ -172,7 +172,7 @@ Historique des versions : [`CHANGELOG.md`](CHANGELOG.md) (mis à jour uniquement
 
 ## Dépannage et FAQ
 
-Le guide de dépannage complet vit dans un fichier dédié : **[`docs/DEPANNAGE.md`](docs/DEPANNAGE.md)**.
+Les problèmes courants et leur solution sont regroupés dans un guide séparé : **[`docs/DEPANNAGE.md`](docs/DEPANNAGE.md)**. Le tableau ci-dessous renvoie directement à la bonne section.
 
 | Situation | Section |
 |---|---|
