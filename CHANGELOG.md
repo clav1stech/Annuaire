@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.11 - 2026-08-15
+- Documentation utilisateur réorganisée : le README est recentré sur l'installation, l'usage courant et la configuration des fichiers SIRENE ; le dépannage (terminal, scripts, cas macOS, mise à jour hors ligne par ZIP, détection des Parquet, nomenclature NAF) passe dans un guide dédié `docs/DEPANNAGE.md` et la structure du rapport Excel dans `docs/EXPORT_EXCEL.md`. Nouvelle procédure de signalement d'un problème : issue GitHub pour un cas purement technique, e-mail au développeur dès qu'une donnée client est en jeu, aucune donnée client dans une issue publique. `CONTRIBUTING.md` complété (tests sans Parquet ni réseau, flux tags et releases, pièges du dépôt).
+
 ## 1.1.10 - 2026-08-05
 - Fichiers SIRENE installés manuellement utilisables sans mise à jour obligatoire ; ajout d'une mise à jour hors ligne du code par glisser-déposer du ZIP GitHub, avec validation de l'archive et remplacement des seuls fichiers nécessaires.
 
