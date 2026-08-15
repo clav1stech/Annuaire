@@ -1,6 +1,6 @@
 # Annuaire_SIRENE
 
-Application Streamlit locale qui contrôle une liste de SIRET/SIREN contre les fichiers SIRENE au format Parquet, enrichit chaque ligne (établissement + unité légale), détecte les cas de déménagement/transfert/remplacement et exporte le tout en Excel.
+Application locale qui contrôle une liste de SIRET/SIREN contre les fichiers SIRENE au format Parquet, enrichit chaque ligne (établissement + unité légale), détecte les cas de déménagement/transfert/remplacement et exporte le tout en Excel. Elle s'utilise dans le navigateur.
 
 ## Sommaire
 
@@ -132,7 +132,7 @@ Source : [base SIRENE sur data.gouv.fr](https://www.data.gouv.fr/datasets/base-s
 ## Structure du projet
 
 ```
-app.py               point d'entrée Streamlit
+app.py               point d'entrée de l'application
 src/                 logique métier (accès données, pipeline, export, mise à jour)
 scripts/             outils CLI (mise à jour, dépendances, changelog, export projet)
 tests/               tests pytest (aucun accès réseau ni Parquet réel)
