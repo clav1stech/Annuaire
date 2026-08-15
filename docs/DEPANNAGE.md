@@ -18,7 +18,7 @@ Si le problème n'est pas traité ici, ouvrir une issue en joignant les informat
 | Un fichier Parquet n'est pas détecté | [Fichier Parquet non détecté](#fichier-parquet-non-détecté) |
 | Un fichier s'affiche en ❔ version inconnue | [Un fichier s'affiche en version inconnue](#un-fichier-saffiche-en-version-inconnue) |
 | Le code NAF ne correspond pas à la nomenclature attendue | [Nomenclature NAF (rév. 2 / 2025)](#nomenclature-naf-rév-2--2025) |
-| Le poste n'a pas accès à GitHub | [Mise à jour hors ligne par ZIP GitHub](#mise-à-jour-hors-ligne-par-zip-github) |
+| La bannière de version ne s'affiche pas, ou le bouton de mise à jour échoue | [Mise à jour hors ligne par ZIP GitHub](#mise-à-jour-hors-ligne-par-zip-github) |
 | L'application ne démarre plus, mise à jour impossible | [Mise à jour en ligne de commande](#mise-à-jour-en-ligne-de-commande) |
 | « Accès refusé » pendant un téléchargement | [Dossier synchronisé (OneDrive & co)](#dossier-synchronisé-onedrive--co) |
 | Sauvegarder le projet ou le transmettre à une IA | [Export du projet](#export-du-projet) |

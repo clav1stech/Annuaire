@@ -81,7 +81,7 @@ Structure détaillée de `siret_overview` (catégories de colonnes, couleurs, va
 
 Un bouton **« Mettre à jour maintenant »** applique la mise à jour. Vos fichiers Parquet SIRENE et le dossier `export/` ne sont jamais touchés : seuls les fichiers de l'application sont remplacés. Ensuite, **fermer l'application et relancer `run_app`** pour charger la nouvelle version — l'application en cours d'exécution utilise encore l'ancien code. Si la nouvelle version a besoin de nouvelles bibliothèques Python, `run_app` les installe automatiquement à ce redémarrage (quelques dizaines de secondes de plus, sans manipulation).
 
-Si le poste n'a pas accès à GitHub, la même mise à jour se fait en déposant un fichier ZIP récupéré depuis un autre poste : voir [Mise à jour hors ligne par ZIP GitHub](docs/DEPANNAGE.md#mise-à-jour-hors-ligne-par-zip-github).
+Si la bannière ne s'affiche pas ou si le bouton échoue, c'est en général le réseau de l'entreprise qui bloque les connexions de l'application — le site GitHub, lui, reste consultable depuis le navigateur du même poste. La mise à jour se fait alors en téléchargeant une archive ZIP depuis ce navigateur, puis en la déposant dans l'application : voir [Mise à jour hors ligne par ZIP GitHub](docs/DEPANNAGE.md#mise-à-jour-hors-ligne-par-zip-github).
 
 > **Deux boutons voisins, à ne pas confondre :** « Mettre à jour maintenant » (bannière de version) met à jour **le code**, quelques centaines de Ko, et demande un redémarrage. « Mettre à jour les données SIRENE » télécharge **les fichiers Parquet**, plusieurs Go, sans redémarrage. Aucun des deux ne touche à ce que gère l'autre.
 
@@ -187,7 +187,7 @@ Les problèmes courants et leur solution sont regroupés dans un guide séparé 
 | Un fichier Parquet n'est pas détecté | [Fichier Parquet non détecté](docs/DEPANNAGE.md#fichier-parquet-non-détecté) |
 | Un fichier s'affiche en ❔ version inconnue | [Un fichier s'affiche en version inconnue](docs/DEPANNAGE.md#un-fichier-saffiche-en-version-inconnue) |
 | Le code NAF ne correspond pas à la nomenclature attendue | [Nomenclature NAF (rév. 2 / 2025)](docs/DEPANNAGE.md#nomenclature-naf-rév-2--2025) |
-| Le poste n'a pas accès à GitHub | [Mise à jour hors ligne par ZIP GitHub](docs/DEPANNAGE.md#mise-à-jour-hors-ligne-par-zip-github) |
+| La bannière de version ne s'affiche pas, ou le bouton de mise à jour échoue | [Mise à jour hors ligne par ZIP GitHub](docs/DEPANNAGE.md#mise-à-jour-hors-ligne-par-zip-github) |
 | L'application ne démarre plus, mise à jour impossible | [Mise à jour en ligne de commande](docs/DEPANNAGE.md#mise-à-jour-en-ligne-de-commande) |
 | « Accès refusé » pendant un téléchargement | [Dossier synchronisé (OneDrive & co)](docs/DEPANNAGE.md#dossier-synchronisé-onedrive--co) |
 | Sauvegarder le projet ou le transmettre à une IA | [Export du projet](docs/DEPANNAGE.md#export-du-projet) |
