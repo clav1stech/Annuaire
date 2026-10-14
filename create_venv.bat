@@ -5,6 +5,11 @@ REM ne sert plus qu'a reinstaller ou reparer un environnement existant.
 setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 set "VENV_DIR=.venv_annuaire_sirene"
+REM Plage de versions 3.x supportee : au-dela, pyarrow/duckdb n'ont pas de wheels
+REM precompilees et l'installation des dependances echoue. Garder en phase avec
+REM create_venv.command, le README et la matrice de la CI.
+set "PY_MIN_MINOR=11"
+set "PY_MAX_MINOR=14"
 
 echo [INFO] Working directory: %CD%
 
@@ -12,12 +17,17 @@ echo [INFO] Detecting installed Python version...
 set "PYTHON_EXE="
 set "PYTHON_ARGS="
 set "PY_VERSION="
+set "REJECTED_VERSION="
+set "REJECTED_EXE="
 
 REM `py` et `python` presents sur le PATH sont souvent les raccourcis Microsoft Store :
 REM ils affichent un message d'aide, ne lancent aucun interpreteur, et sortent malgre
 REM tout en code 0. Ni `where` ni `errorlevel` ne permettent de les ecarter : chaque
 REM candidat doit etre reellement execute avant d'etre retenu (cf. :try_python).
+REM `py -3` choisit la version la plus recente installee : si elle est hors plage, les
+REM versions supportees sont ensuite demandees explicitement au lanceur.
 call :try_python "py" "-3"
+for /l %%M in (%PY_MAX_MINOR%,-1,%PY_MIN_MINOR%) do call :try_python "py" "-3.%%M"
 call :try_python "python" ""
 
 for %%D in (
@@ -37,9 +47,21 @@ for %%D in (
 
 for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python3*") do call :try_python "%%~D\python.exe" ""
 
+if not defined PYTHON_EXE if defined REJECTED_VERSION (
+    echo [ERROR] Python !REJECTED_VERSION! detecte ^(!REJECTED_EXE!^), mais ce projet requiert Python 3.%PY_MIN_MINOR% a 3.%PY_MAX_MINOR%.
+    echo [ERROR] Certaines dependances ^(duckdb, pyarrow, pandas^) ne sont pas encore disponibles
+    echo [ERROR] pour cette version de Python : l'installation echouerait.
+    echo [HINT] Installer Python 3.%PY_MAX_MINOR% depuis https://www.python.org/downloads/ ^(rubrique
+    echo [HINT] "Looking for a specific release?"^). Inutile de desinstaller la version actuelle :
+    echo [HINT] les deux cohabitent, et ce script choisira automatiquement la version supportee.
+    echo [HINT] Relancer ensuite run_app.bat.
+    pause
+    exit /b 1
+)
+
 if not defined PYTHON_EXE (
     echo [ERROR] No working Python interpreter found.
-    echo [HINT] Install Python 3.11-3.14, or make sure your existing installation
+    echo [HINT] Install Python 3.%PY_MIN_MINOR%-3.%PY_MAX_MINOR%, or make sure your existing installation
     echo [HINT] ^(Anaconda/Miniconda included^) has its python.exe reachable from the PATH.
     echo [HINT] Un "python" du PATH qui affiche "Python est introuvable" est un raccourci
     echo [HINT] Microsoft Store : le desactiver dans Parametres ^> Applications ^> Alias
@@ -48,28 +70,7 @@ if not defined PYTHON_EXE (
     exit /b 1
 )
 
-if defined PY_VERSION (
-    echo [INFO] Detected Python version: !PY_VERSION! ^(!PYTHON_EXE! !PYTHON_ARGS!^)
-    set "PY_MAJOR="
-    set "PY_MINOR="
-    for /f "tokens=1,2 delims=." %%A in ("!PY_VERSION!") do (
-        set "PY_MAJOR=%%A"
-        set "PY_MINOR=%%B"
-    )
-    set "PY_IN_RANGE=0"
-    if "!PY_MAJOR!"=="3" if !PY_MINOR! GEQ 11 if !PY_MINOR! LEQ 14 set "PY_IN_RANGE=1"
-    if "!PY_IN_RANGE!"=="0" (
-        echo [WARN] Python !PY_VERSION! est hors de la plage officiellement testee de ce projet ^(3.11-3.14^).
-        echo [WARN] L'installation peut fonctionner grace aux wheels precompilees de pyarrow/duckdb, mais n'est pas garantie.
-        choice /C ON /N /M "Continuer avec Python !PY_VERSION! (O) ou annuler (N) ? "
-        if errorlevel 2 (
-            echo [INFO] Installation annulee par l'utilisateur.
-            exit /b 0
-        )
-    )
-) else (
-    echo [WARN] Impossible de detecter automatiquement la version de Python installee.
-)
+echo [INFO] Detected Python version: !PY_VERSION! ^(!PYTHON_EXE! !PYTHON_ARGS!^)
 
 echo [INFO] Creating virtual environment if needed...
 
@@ -131,6 +132,8 @@ REM Retient le candidat %1 (arguments %2) uniquement si son `--version` renvoie 
 REM numero de version 3.x. Les raccourcis Microsoft Store repondent par un message d'aide
 REM ("Python est introuvable ...") : c'est le seul critere qui les distingue, leur code de
 REM sortie valant 0 comme celui d'un interpreteur reel.
+REM Un interpreteur reel mais hors plage est ecarte et memorise (le premier rencontre)
+REM pour expliquer l'echec si aucun autre candidat ne convient.
 :try_python
 if defined PYTHON_EXE goto :eof
 set "CAND_EXE=%~1"
@@ -140,6 +143,16 @@ if "%CAND_EXE:~1,1%"==":" if not exist "%CAND_EXE%" goto :eof
 for /f "tokens=2" %%V in ('"%CAND_EXE%" %CAND_ARGS% --version 2^>^&1') do if not defined CAND_OUT set "CAND_OUT=%%V"
 if not defined CAND_OUT goto :eof
 if not "!CAND_OUT:~0,2!"=="3." goto :eof
+set "CAND_MINOR="
+for /f "tokens=2 delims=." %%M in ("!CAND_OUT!") do set "CAND_MINOR=%%M"
+if not defined CAND_MINOR goto :eof
+set "CAND_IN_RANGE=0"
+if !CAND_MINOR! GEQ %PY_MIN_MINOR% if !CAND_MINOR! LEQ %PY_MAX_MINOR% set "CAND_IN_RANGE=1"
+if "!CAND_IN_RANGE!"=="1" goto :accept_python
+if not defined REJECTED_VERSION set "REJECTED_EXE=%CAND_EXE% %CAND_ARGS%"
+if not defined REJECTED_VERSION set "REJECTED_VERSION=!CAND_OUT!"
+goto :eof
+:accept_python
 set "PYTHON_EXE=%CAND_EXE%"
 set "PYTHON_ARGS=%CAND_ARGS%"
 set "PY_VERSION=%CAND_OUT%"

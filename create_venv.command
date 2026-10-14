@@ -12,34 +12,53 @@ VENV_DIR=".venv_annuaire_sirene"
 echo "[INFO] Working directory: $(pwd)"
 
 # --- Détection de l'interpréteur Python ---------------------------------------
+# Plage de versions 3.x supportée : au-delà, pyarrow/duckdb n'ont pas de wheels précompilées
+# et l'installation des dépendances échoue. Garder en phase avec create_venv.bat, le README
+# et la matrice de la CI.
+PY_MIN_MINOR=11
+PY_MAX_MINOR=14
+
 PYTHON_BIN=""
-for candidate in python3.14 python3.13 python3.12 python3.11 python3 python; do
-    if command -v "$candidate" >/dev/null 2>&1; then
+PY_VERSION=""
+REJECTED=""
+candidates=()
+for ((minor = PY_MAX_MINOR; minor >= PY_MIN_MINOR; minor--)); do
+    candidates+=("python3.$minor")
+done
+# `python3` / `python` peuvent pointer vers une version hors plage : ils ne sont retenus
+# qu'après vérification, et le premier écarté est mémorisé pour expliquer l'échec.
+for candidate in "${candidates[@]}" python3 python; do
+    command -v "$candidate" >/dev/null 2>&1 || continue
+    version="$("$candidate" -c 'import platform; print(platform.python_version())' 2>/dev/null)" || continue
+    major="${version%%.*}"
+    minor="$(echo "$version" | cut -d. -f2)"
+    if [ "$major" = "3" ] && [ "$minor" -ge "$PY_MIN_MINOR" ] 2>/dev/null \
+        && [ "$minor" -le "$PY_MAX_MINOR" ]; then
         PYTHON_BIN="$candidate"
+        PY_VERSION="$version"
         break
+    fi
+    if [ -z "$REJECTED" ]; then
+        REJECTED="$version ($candidate)"
     fi
 done
 
 if [ -z "$PYTHON_BIN" ]; then
-    echo "[ERROR] Aucun interpréteur Python trouvé."
-    echo "[HINT] Installer Python 3.11 à 3.14 (python.org ou 'brew install python@3.12')."
+    if [ -n "$REJECTED" ]; then
+        echo "[ERROR] Python $REJECTED détecté, mais ce projet requiert Python 3.$PY_MIN_MINOR à 3.$PY_MAX_MINOR."
+        echo "[ERROR] Certaines dépendances (duckdb, pyarrow, pandas) ne sont pas encore disponibles"
+        echo "[ERROR] pour cette version de Python : l'installation échouerait."
+        echo "[HINT] Installer Python 3.$PY_MAX_MINOR (python.org/downloads ou 'brew install python@3.$PY_MAX_MINOR')."
+        echo "[HINT] Inutile de désinstaller la version actuelle : les deux cohabitent, et ce script"
+        echo "[HINT] choisira automatiquement la version supportée. Relancer ensuite ./run_app.command"
+    else
+        echo "[ERROR] Aucun interpréteur Python trouvé."
+        echo "[HINT] Installer Python 3.$PY_MIN_MINOR à 3.$PY_MAX_MINOR (python.org ou 'brew install python@3.$PY_MAX_MINOR')."
+    fi
     exit 1
 fi
 
-PY_VERSION="$("$PYTHON_BIN" -c 'import platform; print(platform.python_version())')"
 echo "[INFO] Python détecté: $PYTHON_BIN ($PY_VERSION)"
-
-PY_MAJOR="${PY_VERSION%%.*}"
-PY_MINOR="$(echo "$PY_VERSION" | cut -d. -f2)"
-if [ "$PY_MAJOR" != "3" ] || [ "$PY_MINOR" -lt 11 ] || [ "$PY_MINOR" -gt 14 ]; then
-    echo "[WARN] Python $PY_VERSION est hors de la plage officiellement testée (3.11-3.14)."
-    echo "[WARN] L'installation peut fonctionner grâce aux wheels précompilées de pyarrow/duckdb, sans garantie."
-    read -r -p "Continuer avec Python $PY_VERSION ? [o/N] " reply
-    case "$reply" in
-        o|O|oui|OUI) ;;
-        *) echo "[INFO] Installation annulée par l'utilisateur."; exit 0 ;;
-    esac
-fi
 
 # --- Création de l'environnement virtuel --------------------------------------
 if [ ! -x "$VENV_DIR/bin/python" ]; then

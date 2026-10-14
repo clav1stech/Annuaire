@@ -20,8 +20,8 @@ if not exist "%VENV_DIR%\Scripts\python.exe" (
     )
 )
 
-REM Second controle volontaire : create_venv.bat sort en code 0 sans creer d'environnement
-REM quand l'utilisateur refuse de continuer avec un Python hors de la plage testee.
+REM Second controle volontaire : garde-fou si create_venv.bat sort en code 0 sans avoir
+REM reellement cree l'environnement.
 if not exist "%VENV_DIR%\Scripts\python.exe" (
     echo [ERROR] Environnement virtuel absent apres l'etape d'installation.
     echo [HINT] Relancer create_venv.bat pour voir le detail de l'echec.

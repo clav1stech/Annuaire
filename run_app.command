@@ -23,8 +23,8 @@ if [ ! -x "$VENV_DIR/bin/python" ]; then
     }
 fi
 
-# Second contrôle volontaire : create_venv.command sort en code 0 sans créer d'environnement
-# quand l'utilisateur refuse de continuer avec un Python hors de la plage testée.
+# Second contrôle volontaire : garde-fou si create_venv.command sort en code 0 sans avoir
+# réellement créé l'environnement.
 if [ ! -x "$VENV_DIR/bin/python" ]; then
     echo "[ERROR] Environnement virtuel absent après l'étape d'installation."
     echo "[HINT] Relancer ./create_venv.command pour voir le détail de l'échec."

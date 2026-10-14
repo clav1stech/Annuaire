@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.12 - 2026-10-14
+- Choix de l'interpréteur Python à l'installation : quand une version trop récente (ex. Python 3.15, pour laquelle duckdb, pyarrow et pandas ne publient pas encore de versions précompilées) est installée à côté d'une version supportée, `create_venv` retient désormais automatiquement la version supportée (3.11 à 3.14) au lieu de la plus récente ; si seule une version hors plage est présente, l'installation s'arrête avec un message explicite invitant à installer Python 3.14 en parallèle, au lieu de proposer de continuer puis d'échouer sur une erreur pip.
+
 ## 1.1.11 - 2026-08-15
 - Documentation utilisateur réorganisée : le README est recentré sur l'installation, l'usage courant et la configuration des fichiers SIRENE ; le dépannage (terminal, scripts, cas macOS, mise à jour hors ligne par ZIP, détection des Parquet, nomenclature NAF) passe dans un guide dédié `docs/DEPANNAGE.md` et la structure du rapport Excel dans `docs/EXPORT_EXCEL.md`. Nouvelle procédure de signalement d'un problème : issue GitHub pour un cas purement technique, e-mail au développeur dès qu'une donnée client est en jeu, aucune donnée client dans une issue publique. `CONTRIBUTING.md` complété (tests sans Parquet ni réseau, flux tags et releases, pièges du dépôt).
 

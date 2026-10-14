@@ -31,7 +31,7 @@ Pour savoir si Python est déjà présent, ouvrir un terminal (voir [Utiliser un
 python3 --version
 ```
 
-Sous Windows, essayer `python --version` si `python3` n'est pas reconnu. Si une version entre 3.11 et 3.14 s'affiche, rien à faire. Si la commande est inconnue, ou si la version est antérieure à 3.11 :
+Sous Windows, essayer `python --version` si `python3` n'est pas reconnu. Si une version entre 3.11 et 3.14 s'affiche, rien à faire. Si la commande est inconnue, ou si la version est antérieure à 3.11 ou postérieure à 3.14 (certaines bibliothèques ne sont pas encore disponibles pour les toutes dernières versions de Python ; inutile alors de la désinstaller, les deux versions cohabitent) :
 
 - **Windows** : installeur depuis [python.org/downloads](https://www.python.org/downloads/). Cocher **« Add python.exe to PATH »** avant « Install Now », sans quoi les scripts ne trouveront pas Python.
 - **macOS** : installeur [python.org/downloads](https://www.python.org/downloads/). Avec Homebrew, qui n'est pas installé par défaut sur macOS : suivre [brew.sh](https://brew.sh/) puis `brew install python@3.14`, en adaptant le numéro de version.
@@ -67,7 +67,7 @@ Avant d'ouvrir l'application, `run_app` crée l'environnement `.venv_annuaire_si
 
 Si cette réinstallation échoue, le plus souvent parce que le poste n'a pas accès à internet ou parce qu'une bibliothèque n'est pas disponible pour cette version de Python, le message d'erreur et la marche à suivre s'affichent, mais l'application est lancée quand même. En cas de dysfonctionnement, relancer `create_venv`.
 
-`create_venv` fait ce que `run_app` exécute au premier lancement, mais en affichant le détail. Utile après un échec, ou après suppression du dossier `.venv_annuaire_sirene`. Il affiche la version de Python détectée et demande confirmation si elle est hors de la plage testée (3.11-3.14), crée l'environnement, installe et met à jour `pip`, installe les dépendances de `requirements.txt` en forçant `pyarrow` et `duckdb` à n'utiliser que des versions précompilées (`--only-binary`, pour éviter une compilation depuis les sources), puis enregistre une empreinte des dépendances installées. C'est elle qui permet à `run_app` de détecter plus tard un décalage avec `requirements.txt`.
+`create_venv` fait ce que `run_app` exécute au premier lancement, mais en affichant le détail. Utile après un échec, ou après suppression du dossier `.venv_annuaire_sirene`. Il retient la première version de Python installée comprise entre 3.11 et 3.14 (une version plus récente, comme 3.15, est ignorée si une version supportée est aussi présente, et refusée avec un message explicite sinon), crée l'environnement, installe et met à jour `pip`, installe les dépendances de `requirements.txt` en forçant `pyarrow` et `duckdb` à n'utiliser que des versions précompilées (`--only-binary`, pour éviter une compilation depuis les sources), puis enregistre une empreinte des dépendances installées. C'est elle qui permet à `run_app` de détecter plus tard un décalage avec `requirements.txt`.
 
 Pour forcer la resynchronisation sans passer par `run_app` : `python scripts/sync_dependencies.py --force` depuis le dossier du projet, environnement virtuel activé.
 
